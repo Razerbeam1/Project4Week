@@ -108,7 +108,7 @@ public class PlayerController : MonoBehaviour
 
         // ปรับความเร็วตามน้ำหนัก
         float adjustedSpeed = speed / (1 + weight / 100);
-        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+        rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
 
         // ปรับการหันหน้าตัวละคร
         if (moveInput != 0)
@@ -131,7 +131,7 @@ public class PlayerController : MonoBehaviour
         {
             // ปรับแรงกระโดดตามน้ำหนัก
             float adjustedJumpForce = jumpForce / (1 + weight / 100);
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             if (isGrounded)
             {
                 jumpCount = 1; // รีเซ็ตและเริ่มต้นกระโดดที่ 1 ครั้งเมื่อสัมผัสพื้น
@@ -264,7 +264,7 @@ public class PlayerController : MonoBehaviour
             {
                 objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
-                objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
+                objRb.linearVelocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
 
             // อัปเดตขนาดของ CircleCollider2D

@@ -19,8 +19,8 @@ public class SlipperyFloor2D : MonoBehaviour
             {
                 Debug.Log($"Player Rigidbody detected: {playerRigidbody.name}");
 
-                Vector2 boostedVelocity = playerRigidbody.velocity.sqrMagnitude > 0.1f
-                    ? playerRigidbody.velocity * speedBoostMultiplier
+                Vector2 boostedVelocity = playerRigidbody.linearVelocity.sqrMagnitude > 0.1f
+                    ? playerRigidbody.linearVelocity * speedBoostMultiplier
                     : Vector2.right * maxSpeed;
 
                 if (boostedVelocity.magnitude > maxSpeed)
@@ -28,7 +28,7 @@ public class SlipperyFloor2D : MonoBehaviour
                     boostedVelocity = boostedVelocity.normalized * maxSpeed;
                 }
 
-                playerRigidbody.velocity = boostedVelocity;
+                playerRigidbody.linearVelocity = boostedVelocity;
 
                 Debug.Log($"Player is speeding up! New Velocity: {boostedVelocity}");
             }
