@@ -18,13 +18,9 @@ public class LeverController : MonoBehaviour
     [SerializeField] GameObject Dor; // อ้างอิงถึง GameObject Dor ที่จะเลื่อนลง
     [SerializeField] float moveDistance; // ระยะที่ Dor จะเลื่อนลง
 
-    /*private AudioManager audioManager; // เสียงในเกม
-    private void Awake()
-    {
-        audioManager = GameObject.FindGameObjectWithTag("Audio").GetComponent<AudioManager>(); // เสียงในเกม
-       
-    }*/
-    
+    private List<GameObject> collectedObjects = new List<GameObject>(); // เก็บ obj ที่โยนใส่คันโยก
+    private int requiredTrashObjects = 3; // จำนวน obj ที่ต้องการ
+
     void Start()
     {
         originalPosition = transform.position; // บันทึกตำแหน่งเริ่มต้นของคันโยก
@@ -33,13 +29,11 @@ public class LeverController : MonoBehaviour
 
     void Update()
     {
-        // ตรวจสอบว่าผู้เล่นอยู่ใกล้และกดปุ่ม E หนึ่งครั้ง
-        if (isPlayerNear && Input.GetKeyDown(KeyCode.E) && !isLeverPulled && !hasRotated)
+        // ตรวจสอบว่าผู้เล่นอยู่ใกล้และกดปุ่ม E หนึ่งครั้ง และมี obj ครบตามจำนวนที่กำหนด
+        if (isPlayerNear && Input.GetKeyDown(KeyCode.E) && !isLeverPulled && !hasRotated && collectedObjects.Count >= requiredTrashObjects)
         {
             // หมุนคันโยกโดยใช้ rotationAmount
             transform.Rotate(0, 0, rotationAmount);
-            //audioManager.PlaySFX(audioManager.Lever); // เสียงSFX Get Hp
-
             // เริ่มเลื่อน Dor ลง
             isLeverPulled = true; // คันโยกถูกโยกแล้ว
             hasRotated = true; // คันโยกหมุนแล้ว
@@ -73,6 +67,10 @@ public class LeverController : MonoBehaviour
             isPlayerNear = true; // ตั้งค่าสถานะผู้เล่นใกล้
             Debug.Log("ผู้เล่นอยู่ใกล้คันโยก");
         }
+        else if (collision.gameObject.CompareTag("TrashObject")) // ถ้าชนกับ TrashObject
+        {
+            AddTrashObject(collision.gameObject); // เรียกฟังก์ชันเพิ่ม TrashObject
+        }
     }
 
     void OnCollisionExit2D(Collision2D collision)
@@ -83,5 +81,19 @@ public class LeverController : MonoBehaviour
             Debug.Log("ผู้เล่นออกจากการชนคันโยก");
         }
     }
-    
+
+    void AddTrashObject(GameObject trashObject)
+    {
+        if (collectedObjects.Count < requiredTrashObjects) // ตรวจสอบว่ายังเก็บ obj ได้อยู่หรือไม่
+        {
+            collectedObjects.Add(trashObject); // เพิ่ม obj ลงในอาร์เรย์
+            Destroy(trashObject); // ลบ obj ออกจากเกม
+            Debug.Log("เก็บ TrashObject แล้ว: " + collectedObjects.Count + "/" + requiredTrashObjects);
+
+            if (collectedObjects.Count >= requiredTrashObjects)
+            {
+                Debug.Log("คันโยกพร้อมให้ใช้งานแล้ว!");
+            }
+        }
+    }
 }
