@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float sizeIncreaseFactor; // ปริมาณการขยายตัวของ Player ต่อวัตถุหนึ่งชิ้น
     [SerializeField] private Image[] absorbCountImages; // Array ของรูปภาพ UI
     [SerializeField] private int maxAbsorbableObjects; // จำนวนวัตถุสูงสุดที่ดูดได้
+    
 
     private Rigidbody2D rb;
     private bool isGrounded = false;
@@ -95,7 +96,7 @@ public class PlayerController : MonoBehaviour
     #region <HandleMovement> // ควบคุมการเคลื่อนที่
     private void HandleMovement()
     {
-        float moveInput = 0f;
+        /*float moveInput = 0f;
 
         if (Input.GetKey(KeyCode.A))
         {
@@ -108,7 +109,7 @@ public class PlayerController : MonoBehaviour
 
         // ปรับความเร็วตามน้ำหนัก
         float adjustedSpeed = speed / (1 + weight / 100);
-        rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
+        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
 
         // ปรับการหันหน้าตัวละคร
         if (moveInput != 0)
@@ -119,7 +120,55 @@ public class PlayerController : MonoBehaviour
 
             // กำหนดให้ Player หันซ้ายหรือขวา
             transform.localScale = new Vector3(moveInput > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        }*/
+        
+        
+        
+        // ตัวแปรสำหรับเก็บความเร็วในทิศทาง X
+        float targetVelocityX = 0f;
+ 
+        // ตรวจสอบการกดปุ่ม
+        if (Input.GetKey(KeyCode.A))
+        {
+            targetVelocityX = -1f; // เคลื่อนไปทางซ้าย
         }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            targetVelocityX = 1f; // เคลื่อนไปทางขวา
+        }
+
+        // ปรับความเร็วตามน้ำหนัก
+        float adjustedSpeed = speed / (1 + weight / 100);
+
+        // ค่อยๆ ปรับความเร็วให้สมูท (ทำให้ตัวละครเคลื่อนไหวเรียบขึ้น)
+        float smoothTime = 0.3f; // เวลาที่ใช้ในการปรับความเร็ว
+        float newVelocityX = Mathf.Lerp(rb.velocity.x, targetVelocityX * adjustedSpeed, smoothTime / Time.deltaTime);
+
+        // กำหนดความเร็วใหม่ให้ Rigidbody
+        rb.velocity = new Vector2(newVelocityX, rb.velocity.y);
+
+        // เมื่อไม่มีการกดปุ่ม (targetVelocityX == 0), ให้มีแรงเฉื่อย
+        if (targetVelocityX == 0)
+        {
+            // ค่อยๆ ลดความเร็วของ rb.velocity.x ให้ค่อยๆ ลดลง
+            rb.velocity = new Vector2(Mathf.Lerp(rb.velocity.x, 0, 0.1f), rb.velocity.y);
+        }
+
+        // ปรับการหันหน้าตัวละครและการหมุน
+        if (targetVelocityX != 0)
+        {
+            // หมุนตัว Player เพื่อแสดงการกลิ้ง
+            float rotationSpeed = 360f; // ปรับค่าความเร็วการหมุน (องศาต่อวินาที)
+            transform.Rotate(0, 0, -targetVelocityX * rotationSpeed * Time.deltaTime);
+
+            // กำหนดให้ Player หันซ้ายหรือขวา
+            transform.localScale = new Vector3(
+                targetVelocityX > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
+        }
+
     }
     #endregion 
     
@@ -131,7 +180,7 @@ public class PlayerController : MonoBehaviour
         {
             // ปรับแรงกระโดดตามน้ำหนัก
             float adjustedJumpForce = jumpForce / (1 + weight / 100);
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             if (isGrounded)
             {
                 jumpCount = 1; // รีเซ็ตและเริ่มต้นกระโดดที่ 1 ครั้งเมื่อสัมผัสพื้น
@@ -143,77 +192,7 @@ public class PlayerController : MonoBehaviour
         }
     }
     #endregion
-    
-
-    /*private void HandleAbsorption()
-    {
-        if (Input.GetMouseButtonDown(0)) // คลิกซ้ายเพื่อดูดวัตถุ
-        {
-            if (absorbedObjects.Count >= maxAbsorbableObjects) // ตรวจสอบว่าเกินขีดจำกัดหรือไม่
-            {
-                Debug.Log("ไม่สามารถดูดวัตถุได้ เก็บครบแล้ว!");
-                return;
-            }
-
-            Collider2D[] hits = Physics2D.OverlapCircleAll(absorbPoint.position, absorbRange);
-
-            foreach (Collider2D hit in hits)
-            {
-                if (IsAbsorbable(hit.gameObject))
-                {
-                    GameObject obj = hit.gameObject;
-
-                    // เพิ่มขนาด Player แบบเท่ากันทุกด้าน
-                    float newScale = transform.localScale.x + sizeIncreaseFactor;
-                    transform.localScale = new Vector3(newScale, newScale, newScale);
-
-                    // ลบวัตถุออกจาก Scene และเพิ่มเข้าไปใน List
-                    absorbedObjects.Add(obj);
-                    obj.SetActive(false); // ซ่อนวัตถุแทนการลบ
-                    UpdateAbsorbCountUI(); // อัปเดต UI
-                    Debug.Log("ดูดวัตถุ: " + obj.name);
-                    return;
-                }
-            }
-
-            Debug.Log("ไม่พบวัตถุในระยะดูด");
-        }
-    }*/
-
-    /*private void HandleReleaseObjects()
-    {
-        if (Input.GetKeyDown(KeyCode.E) && absorbedObjects.Count > 0) // กด E เพื่อปล่อยวัตถุ
-        {
-            // ดึงวัตถุจาก List และแสดงในตำแหน่ง absorbPoint
-            GameObject obj = absorbedObjects[absorbedObjects.Count - 1];
-            absorbedObjects.RemoveAt(absorbedObjects.Count - 1);
-
-            obj.transform.position = absorbPoint.position;
-            obj.SetActive(true); // แสดงวัตถุใหม่
-            
-            // ตรวจสอบว่าทิ้งลงในถังขยะหรือไม่
-            if (trashCan != null)
-            {
-                // ใช้ Collider2D ตรวจสอบว่าไปทิ้งในพื้นที่ของ TrashCan หรือไม่
-                Collider2D objCollider = obj.GetComponent<Collider2D>();
-                if (trashCan.GetComponent<Collider2D>().IsTouching(objCollider))
-                {
-                    trashCan.AddObjectToTrash(); // เพิ่มจำนวนวัตถุในถังขยะ
-                }
-            }
-
-            // ลดขนาด Player แบบเท่ากันทุกด้าน
-            float newScale = transform.localScale.x - sizeIncreaseFactor;
-
-            // ตรวจสอบว่าขนาดไม่ต่ำกว่าขนาดเริ่มต้น
-            newScale = Mathf.Max(newScale, initialScale);
-            transform.localScale = new Vector3(newScale, newScale, newScale);
-
-            UpdateAbsorbCountUI(); // อัปเดต UI
-            Debug.Log("ปล่อยวัตถุ: " + obj.name);
-        }
-    }*/
-    
+     
     #region <HandleAbsorptionWithMana> //กดปุ่มซ้ายค้างเพื่อดูดวัตถุพร้อมกับการใช้มานาในการดูด
     private void HandleAbsorptionWithMana() //กดปุ่มซ้ายค้างเพื่อดูดวัตถุพร้อมกับการใช้มานาในการดูด
     {
@@ -264,7 +243,7 @@ public class PlayerController : MonoBehaviour
             {
                 objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
-                objRb.linearVelocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
+                objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
 
             // อัปเดตขนาดของ CircleCollider2D
@@ -275,38 +254,6 @@ public class PlayerController : MonoBehaviour
         }
     }
     #endregion
-    
-    /*private void AbsorbObjects()
-    {
-        // เมื่อกดคลิกซ้ายค้างและมานาพร้อม
-        if (currentMana > 0)
-        {
-            Collider2D[] hits = Physics2D.OverlapCircleAll(absorbPoint.position, absorbRange);
-
-            foreach (Collider2D hit in hits)
-            {
-                if (IsAbsorbable(hit.gameObject))
-                {
-                    GameObject obj = hit.gameObject;
-
-                    // เพิ่มขนาด Player แบบเท่ากันทุกด้าน
-                    float newScale = transform.localScale.x + sizeIncreaseFactor;
-                    transform.localScale = new Vector3(newScale, newScale, newScale);
-                    
-                    weight += weightIncreasePerObject; // เพิ่มน้ำหนักตามวัตถุที่ดูด
-                    
-                    // ลบวัตถุออกจาก Scene และเพิ่มเข้าไปใน List
-                    absorbedObjects.Add(obj);
-                    obj.SetActive(false); // ซ่อนวัตถุแทนการลบ
-                    UpdateAbsorbCountUI(); // อัปเดต UI
-                    Debug.Log("ดูดวัตถุ: " + obj.name);
-                    return;
-                }
-            }
-
-            Debug.Log("ไม่พบวัตถุในระยะดูด");
-        }
-    }*/
     
     #region <AbsorbObjects> //ดูดวัตถุที่อยู่ในระยะที่กำหนด
     private void AbsorbObjects() //ดูดวัตถุที่อยู่ในระยะที่กำหนด
@@ -480,6 +427,16 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Game Over!");
                 // คุณสามารถเพิ่ม Logic การหยุดเกมหรือแสดงเมนู Game Over ที่นี่
             }
+            
+            for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
+            {
+                if (Checkpoint.checkpointReached[i]) 
+                {
+                    transform.position = Checkpoint.checkpointPositions[i]; // กลับไปที่เช็คพอยต์ล่าสุด
+                    Debug.Log("Player fell. Respawning at checkpoint " + (i + 1));
+                    break;
+                }
+            }
         }
     }
     #endregion
@@ -490,8 +447,8 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < hpImages.Length; i++)
         {
             if (i < hp)
-            {
-                hpImages[i].color = Color.green; // สีปกติ
+            { 
+                //hpImages[i].color = Color.green; // สีปกติ
             }
             else
             {

@@ -2,40 +2,43 @@ using UnityEngine;
 
 public class SlipperyFloor2D : MonoBehaviour
 {
-    [SerializeField] float speedBoostMultiplier = 2f;
-    [SerializeField] float maxSpeed = 10f;
+    [SerializeField] float speedBoostMultiplier = 1.5f; // ค่าคูณความเร็วสำหรับพื้นลื่น
+    [SerializeField] float maxSpeed = 10f; // ความเร็วสูงสุดที่ผู้เล่นสามารถเดินได้
+    [SerializeField] float frictionMultiplier = 0.95f; // ตัวคูณสำหรับลดความเร็ว (ช่วยให้หยุดช้าลงหลังจากออกจากพื้นที่)
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        Debug.Log("OnTriggerStay2D triggered!");
-
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Player is on slippery floor!");
-
             Rigidbody2D playerRigidbody = other.attachedRigidbody;
 
             if (playerRigidbody != null)
             {
-                Debug.Log($"Player Rigidbody detected: {playerRigidbody.name}");
+                // ถ้า player มีความเร็วมากกว่า 0.1 ให้คูณความเร็วเพิ่มขึ้น
+                Vector2 boostedVelocity = playerRigidbody.velocity.sqrMagnitude > 0.1f
+                    ? playerRigidbody.velocity * speedBoostMultiplier
+                    : playerRigidbody.velocity;
 
-                Vector2 boostedVelocity = playerRigidbody.linearVelocity.sqrMagnitude > 0.1f
-                    ? playerRigidbody.linearVelocity * speedBoostMultiplier
-                    : Vector2.right * maxSpeed;
-
+                // ตรวจสอบไม่ให้ความเร็วเกินขีดจำกัด
                 if (boostedVelocity.magnitude > maxSpeed)
                 {
                     boostedVelocity = boostedVelocity.normalized * maxSpeed;
                 }
 
-                playerRigidbody.linearVelocity = boostedVelocity;
+                playerRigidbody.velocity = boostedVelocity;
 
-                Debug.Log($"Player is speeding up! New Velocity: {boostedVelocity}");
-            }
-            else
-            {
-                Debug.Log("Player does not have a Rigidbody2D attached.");
+                // ทำให้มีการลดความเร็วอย่างช้าๆ ถ้าไม่อยู่บนพื้นที่ลื่นแล้ว
+                if (!IsPlayerOnSlipperyFloor(other))
+                {
+                    playerRigidbody.velocity = playerRigidbody.velocity * frictionMultiplier;
+                }
             }
         }
+    }
+
+    private bool IsPlayerOnSlipperyFloor(Collider2D other)
+    {
+        // เช็คว่า Player ยืนอยู่บนพื้นลื่นหรือไม่
+        return other.CompareTag("Player");
     }
 }

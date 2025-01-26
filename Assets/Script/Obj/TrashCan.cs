@@ -12,7 +12,7 @@ public class TrashCan : MonoBehaviour
     [SerializeField] private Color grayColor; // สีเทาที่จะแสดงเมื่อเริ่มต้น
     [Header("Door Settings")]
     [SerializeField] private GameObject door; // ประตูที่จะเลื่อนขึ้น
-    [SerializeField] private float doorMoveSpeed = 2f; // ความเร็วในการเลื่อนประตู
+    [SerializeField] private float doorMoveSpeed; // ความเร็วในการเลื่อนประตู
 
     private void Start()
     {
