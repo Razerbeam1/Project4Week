@@ -95,16 +95,7 @@ public class PlayerController : MonoBehaviour
     #region <HandleMovement> // ควบคุมการเคลื่อนที่
     private void HandleMovement()
     {
-        float moveInput = 0f;
-
-        if (Input.GetKey(KeyCode.A))
-        {
-            moveInput = -1f;
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            moveInput = 1f;
-        }
+        float moveInput = Input.GetAxis("Horizontal");
 
         // ปรับความเร็วตามน้ำหนัก
         float adjustedSpeed = speed / (1 + weight / 100);
@@ -113,12 +104,9 @@ public class PlayerController : MonoBehaviour
         // ปรับการหันหน้าตัวละคร
         if (moveInput != 0)
         {
-            // หมุนตัว Player เพื่อแสดงการกลิ้ง
-            float rotationSpeed = 360f; // ปรับค่าความเร็วการหมุน (องศาต่อวินาที)
-            transform.Rotate(0, 0, -moveInput * rotationSpeed * Time.deltaTime);
-
-            // กำหนดให้ Player หันซ้ายหรือขวา
-            transform.localScale = new Vector3(moveInput > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            // ใส่ค่า Torque เพื่อให้ตัวละครกลิ้งไปตามทิศทาง
+            float torqueAmount = -moveInput * adjustedSpeed;
+            rb.AddTorque(torqueAmount);
         }
     }
     #endregion 
