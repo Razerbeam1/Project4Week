@@ -142,16 +142,16 @@ public class PlayerController : MonoBehaviour
 
         // ค่อยๆ ปรับความเร็วให้สมูท (ทำให้ตัวละครเคลื่อนไหวเรียบขึ้น)
         float smoothTime = 0.3f; // เวลาที่ใช้ในการปรับความเร็ว
-        float newVelocityX = Mathf.Lerp(rb.velocity.x, targetVelocityX * adjustedSpeed, smoothTime / Time.deltaTime);
+        float newVelocityX = Mathf.Lerp(rb.linearVelocity.x, targetVelocityX * adjustedSpeed, smoothTime / Time.deltaTime);
 
         // กำหนดความเร็วใหม่ให้ Rigidbody
-        rb.velocity = new Vector2(newVelocityX, rb.velocity.y);
+        rb.linearVelocity = new Vector2(newVelocityX, rb.linearVelocity.y);
 
         // เมื่อไม่มีการกดปุ่ม (targetVelocityX == 0), ให้มีแรงเฉื่อย
         if (targetVelocityX == 0)
         {
             // ค่อยๆ ลดความเร็วของ rb.velocity.x ให้ค่อยๆ ลดลง
-            rb.velocity = new Vector2(Mathf.Lerp(rb.velocity.x, 0, 0.1f), rb.velocity.y);
+            rb.linearVelocity = new Vector2(Mathf.Lerp(rb.linearVelocity.x, 0, 0.1f), rb.linearVelocity.y);
         }
 
         // ปรับการหันหน้าตัวละครและการหมุน
@@ -180,7 +180,7 @@ public class PlayerController : MonoBehaviour
         {
             // ปรับแรงกระโดดตามน้ำหนัก
             float adjustedJumpForce = jumpForce / (1 + weight / 100);
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             if (isGrounded)
             {
                 jumpCount = 1; // รีเซ็ตและเริ่มต้นกระโดดที่ 1 ครั้งเมื่อสัมผัสพื้น
@@ -243,7 +243,7 @@ public class PlayerController : MonoBehaviour
             {
                 objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
-                objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
+                objRb.linearVelocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
 
             // อัปเดตขนาดของ CircleCollider2D
