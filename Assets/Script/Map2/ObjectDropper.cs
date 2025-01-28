@@ -6,7 +6,7 @@ public class ObjectDropper : MonoBehaviour
     public Transform[] spawnPoints; // จุดปล่อยวัตถุ (Empty GameObjects)
     public float dropInterval = 5f; // ระยะเวลาที่วัตถุจะหล่น (วินาที)
     public float fallSpeed = 5f; // ความเร็วที่วัตถุหล่นลงด้านล่าง
-    public float destroyDelay = 10f; // ระยะเวลาที่วัตถุจะถูกทำลายหลังจากหล่น
+    [SerializeField] public float destroyDelay; // ระยะเวลาที่วัตถุจะถูกทำลายหลังจากหล่น
 
     private void Start()
     {

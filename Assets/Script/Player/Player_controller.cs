@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Control Settings")]
     [SerializeField] private float speed; // ความเร็วการเคลื่อนที่
-    [SerializeField] private float jumpForce; // แรงกระโดด
+    //[SerializeField] private float jumpForce; // แรงกระโดด
     [SerializeField] private Transform absorbPoint; // จุดที่ใช้ดูดวัตถุ
     [SerializeField] private float absorbRange; // ระยะการดูดวัตถุ
     [SerializeField] private GameObject[] absorbableObjects; // วัตถุที่สามารถดูดได้
@@ -14,14 +14,23 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Image[] absorbCountImages; // Array ของรูปภาพ UI
     [SerializeField] private int maxAbsorbableObjects; // จำนวนวัตถุสูงสุดที่ดูดได้
     
+    
+    public float moveSpeed = 5f; // ความเร็วในการเคลื่อนที่
+    public float groundStickForce = 10f; // แรงยึดติดกับพื้น
+    public float edgeSnapDistance = 0.2f; // ระยะห่างที่ใช้ตรวจจับขอบพื้น
+    private Rigidbody2D rb2d; // ตัวควบคุม Rigidbody2D
+    private bool isOnGround = false; // ตรวจสอบว่าอยู่บนพื้นหรือไม่
+    private Vector2 groundNormal; // ทิศทาง Normal ของพื้น
+    
+    
 
     private Rigidbody2D rb;
     private bool isGrounded = false;
     private List<GameObject> absorbedObjects = new List<GameObject>(); // เก็บวัตถุที่ถูกดูด
 
     private float initialScale; // ขนาดเริ่มต้นของ Player
-    private int jumpCount = 0; // ตัวนับจำนวนการกระโดด
-    [SerializeField] private int maxJumpCount; // จำนวนการกระโดดสูงสุด
+    //private int jumpCount = 0; // ตัวนับจำนวนการกระโดด
+    //[SerializeField] private int maxJumpCount; // จำนวนการกระโดดสูงสุด
     
     
     [Header("Weight Settings")]
@@ -34,13 +43,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public Image[] hpImages; // อ้างอิงถึงจุดรูปภาพ HP ทั้งหมด
     [SerializeField] int hp; // จำนวน HP เริ่มต้นของผู้เล่น
 
-    [Header("Mana Settings")]
+    /*[Header("Mana Settings")]
     [SerializeField] private Image[] manaImages; // รูปภาพของ Bar มานา
     [SerializeField] private float manaRechargeTime; // เวลาที่ใช้ในการรีเซ็ตมานาจุดละ 1 จุด
     [SerializeField] private float manaConsumptionTime; // เวลาที่ใช้ในการลดมานาจุดละ 1 จุด
     private int currentMana; // มานาปัจจุบัน
     private float manaTimer; // ตัวจับเวลาสำหรับการลดมานา
-    private bool isAbsorbing; // ตรวจสอบว่าผู้เล่นกำลังกดดูดวัตถุอยู่หรือไม่
+    private bool isAbsorbing; // ตรวจสอบว่าผู้เล่นกำลังกดดูดวัตถุอยู่หรือไม่*/
     
     [Header("Trash Can Settings")]
     [SerializeField] private TrashCan trashCan; // อ้างอิงถึง TrashCan ที่แยกออกมา
@@ -52,6 +61,15 @@ public class PlayerController : MonoBehaviour
     
     private float initialColliderRadius; //รัศมีเริ่มต้นของ Collider
     
+    
+   
+    
+    private bool isTouchingWall; // เช็คว่า Player กำลังสัมผัสกำแพงหรือไม่
+    private bool isClimbing; // เช็คว่า Player กำลังปีนกำแพงหรือไม่
+    private float fallingSpeed = 50f; // ความเร็วในการตกลงมา
+    private float climbSpeed = 5f; // ความเร็วในการปีน
+    
+    
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -61,8 +79,8 @@ public class PlayerController : MonoBehaviour
         UpdateAbsorbCountUI(); // อัปเดต UI เริ่มต้น
         UpdateHPUI(); // อัปเดต UI ตอนเริ่มเกม
         
-        currentMana = manaImages.Length; // เริ่มต้นมานาเต็ม
-        UpdateManaUI();
+        //currentMana = manaImages.Length; // เริ่มต้นมานาเต็ม
+        //UpdateManaUI();
         
         // หาตำแหน่งเช็คพอยต์ล่าสุดที่ผ่าน
         // เมื่อเริ่มเกม ให้เช็คจุดที่เช็คพอยต์ล่าสุดและย้ายผู้เล่นไปยังจุดนั้น
@@ -81,16 +99,22 @@ public class PlayerController : MonoBehaviour
         {
             initialColliderRadius = playerCollider.radius;
         }
+        
+        rb2d = GetComponent<Rigidbody2D>();
+        if (rb2d == null)
+        {
+            Debug.LogError("Rigidbody2D is missing from the Player object! Please add a Rigidbody2D.");
+        }
     }
 
     private void Update()
     {
         HandleMovement();
-        HandleJump();
+        //HandleJump();
         //HandleAbsorption();
         HandleReleaseObjects();
         HandleAbsorptionWithMana();
-        RechargeMana();
+        //RechargeMana();
     }
     
     #region <HandleMovement> // ควบคุมการเคลื่อนที่
@@ -122,65 +146,180 @@ public class PlayerController : MonoBehaviour
             transform.localScale = new Vector3(moveInput > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
         }*/
         
-        
-        
-        // ตัวแปรสำหรับเก็บความเร็วในทิศทาง X
         float targetVelocityX = 0f;
- 
-        // ตรวจสอบการกดปุ่ม
-        if (Input.GetKey(KeyCode.A))
+    float targetVelocityY = 0f;
+
+    // ตรวจสอบการกดปุ่มในแนวแกน X (ซ้าย/ขวา)
+    if (Input.GetKey(KeyCode.A))
+    {
+        targetVelocityX = -1f; // เคลื่อนไปทางซ้าย
+    }
+    else if (Input.GetKey(KeyCode.D))
+    {
+        targetVelocityX = 1f; // เคลื่อนไปทางขวา
+    }
+
+    // ถ้า Player กำลังสัมผัสกำแพงและกดปุ่ม W ให้สามารถปีนขึ้นไปได้
+    if (isTouchingWall && Input.GetKey(KeyCode.W))
+    {
+        isClimbing = true; // เริ่มปีนกำแพง
+        targetVelocityY = climbSpeed; // ให้ Player ปีนขึ้น
+    }
+    else if (isTouchingWall && Input.GetKey(KeyCode.S))
+    {
+        isClimbing = true; // เริ่มปีนกำแพงลง
+        targetVelocityY = -climbSpeed; // ให้ Player ปีนลง
+    }
+    else
+    {
+        isClimbing = false; // หยุดปีนกำแพงเมื่อไม่ได้กด W หรือ S
+    }
+
+    // ถ้ากำลังปีนกำแพงจะไม่อนุญาตให้เคลื่อนที่ในแนว X
+    if (isClimbing)
+    {
+        targetVelocityX = 0f; // หยุดการเคลื่อนไหวในแนว X
+    }
+
+    // หาก Player กำลังไม่สัมผัสกำแพงและปีนอยู่ ให้ตกลงมาเร็ว
+    if (!isTouchingWall && isClimbing)
+    {
+        targetVelocityY = -fallingSpeed; // ทำให้มันตกลงมาเร็ว
+    }
+
+    // หาก Player กำลังอยู่บนพื้นและไม่ได้ปีนกำแพง
+    if (isOnGround && !isClimbing)
+    {
+        // ตรวจสอบการกดปุ่มในแนวแกน Y (ขึ้น/ลง)
+        if (Input.GetKey(KeyCode.W))
         {
-            targetVelocityX = -1f; // เคลื่อนไปทางซ้าย
+            targetVelocityY = 1f; // เคลื่อนไปข้างบน
         }
-        else if (Input.GetKey(KeyCode.D))
+        else if (Input.GetKey(KeyCode.S))
         {
-            targetVelocityX = 1f; // เคลื่อนไปทางขวา
+            targetVelocityY = -1f; // เคลื่อนไปข้างล่าง
         }
 
-        // ปรับความเร็วตามน้ำหนัก
-        float adjustedSpeed = speed / (1 + weight / 100);
+        // รับการเคลื่อนที่จากผู้เล่น
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
 
-        // ค่อยๆ ปรับความเร็วให้สมูท (ทำให้ตัวละครเคลื่อนไหวเรียบขึ้น)
-        float smoothTime = 0.3f; // เวลาที่ใช้ในการปรับความเร็ว
-        float newVelocityX = Mathf.Lerp(rb.linearVelocity.x, targetVelocityX * adjustedSpeed, smoothTime / Time.deltaTime);
+        // คำนวณทิศทางการเคลื่อนที่
+        Vector2 inputDirection = new Vector2(horizontal, vertical);
 
-        // กำหนดความเร็วใหม่ให้ Rigidbody
-        rb.linearVelocity = new Vector2(newVelocityX, rb.linearVelocity.y);
+        // ปรับการเคลื่อนที่ให้สอดคล้องกับพื้น
+        Vector2 moveDirection = AdjustMovementToGround(inputDirection) * moveSpeed;
 
-        // เมื่อไม่มีการกดปุ่ม (targetVelocityX == 0), ให้มีแรงเฉื่อย
-        if (targetVelocityX == 0)
-        {
-            // ค่อยๆ ลดความเร็วของ rb.velocity.x ให้ค่อยๆ ลดลง
-            rb.linearVelocity = new Vector2(Mathf.Lerp(rb.linearVelocity.x, 0, 0.1f), rb.linearVelocity.y);
-        }
+        // ตั้งค่าความเร็วใหม่
+        targetVelocityX = moveDirection.x;
+        targetVelocityY = moveDirection.y;
+    }
 
-        // ปรับการหันหน้าตัวละครและการหมุน
-        if (targetVelocityX != 0)
-        {
-            // หมุนตัว Player เพื่อแสดงการกลิ้ง
-            float rotationSpeed = 360f; // ปรับค่าความเร็วการหมุน (องศาต่อวินาที)
-            transform.Rotate(0, 0, -targetVelocityX * rotationSpeed * Time.deltaTime);
+    // ปรับความเร็วตามน้ำหนัก
+    float adjustedSpeed = moveSpeed / (1 + weight / 100);
 
-            // กำหนดให้ Player หันซ้ายหรือขวา
-            transform.localScale = new Vector3(
-                targetVelocityX > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x),
-                transform.localScale.y,
-                transform.localScale.z
-            );
-        }
+    // คำนวณความเร็วในแนว X และ Y โดยไม่ใช้การสมูท
+    float newVelocityX = targetVelocityX * adjustedSpeed;
 
+    // แก้ไขการคำนวณ Y velocity ให้เหมาะสมกับการตกและการปีน
+    float newVelocityY;
+    if (isClimbing)
+    {
+        newVelocityY = targetVelocityY;
+    }
+    else if (isOnGround)
+    {
+        newVelocityY = targetVelocityY;
+    }
+    else
+    {
+        newVelocityY = targetVelocityY;
+    }
+
+    // อัปเดตความเร็วใหม่ในแกน X และ Y
+    rb2d.velocity = new Vector2(newVelocityX, newVelocityY);
+
+    // การหมุนตัวและการหันหน้า
+    if (targetVelocityX != 0)
+    {
+        // หมุนตัว Player เพื่อแสดงการกลิ้ง
+        float rotationSpeed = 360f; // ปรับค่าความเร็วการหมุน (องศาต่อวินาที)
+        transform.Rotate(0, 0, -targetVelocityX * rotationSpeed * Time.deltaTime);
+
+        // กำหนดให้ Player หันซ้ายหรือขวา
+        transform.localScale = new Vector3(
+            targetVelocityX > 0 ? Mathf.Abs(transform.localScale.x) : -Mathf.Abs(transform.localScale.x),
+            transform.localScale.y,
+            transform.localScale.z
+        );
+    }
+        
     }
     #endregion 
     
+    // ปรับการเคลื่อนที่ให้ตรงกับแนวพื้น
+    Vector2 AdjustMovementToGround(Vector2 inputDirection)
+    {
+        // โยนทิศทางการเคลื่อนที่ไปยังระนาบที่ขนานกับพื้น
+        Vector2 tangent = Vector2.Perpendicular(groundNormal);
+        return Vector2.Dot(inputDirection, tangent) * tangent.normalized;
+    }
+    // เพิ่มแรงดูดให้ Player ติดกับพื้น
+    void StickToGround()
+    {
+        if (!isOnGround) return;
+
+        // ใช้แรงในทิศทางของ Normal ของพื้น เพื่อให้ Player ไม่ตก
+        Vector2 stickForce = -groundNormal * groundStickForce;
+        rb2d.AddForce(stickForce, ForceMode2D.Force);
+
+        // ตรวจสอบขอบพื้นโดยการยิง Raycast
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, -groundNormal, edgeSnapDistance, LayerMask.GetMask("Ground"));
+        if (hit.collider != null)
+        {
+            // ถ้า Raycast เจอพื้น ก็จะบังคับให้ Player ติดขอบ
+            rb2d.velocity = new Vector2(rb2d.velocity.x, Mathf.Max(rb2d.velocity.y, 0f));
+        }
+    }
+
+    void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isOnGround = true;
+
+            // คำนวณค่าเฉลี่ยของ Normal จากทุกจุดที่ชน
+            Vector2 normalSum = Vector2.zero;
+            foreach (ContactPoint2D contact in collision.contacts)
+            {
+                normalSum += contact.normal;
+            }
+            groundNormal = normalSum.normalized;
+        }
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isOnGround = false;
+        }
+    }
+
+
+
+    
+    
+    
     #region <HandleJump> //ควบคุมการกระโดด
-    private void HandleJump() //ควบคุมการกระโดด
+    /*private void HandleJump() //ควบคุมการกระโดด
     {
         // ตรวจสอบว่าอยู่บนพื้นและจำนวนการกระโดดยังไม่เกินจำนวนสูงสุด
         if (Input.GetKeyDown(KeyCode.W) && (isGrounded || jumpCount < maxJumpCount))
         {
             // ปรับแรงกระโดดตามน้ำหนัก
             float adjustedJumpForce = jumpForce / (1 + weight / 100);
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             if (isGrounded)
             {
                 jumpCount = 1; // รีเซ็ตและเริ่มต้นกระโดดที่ 1 ครั้งเมื่อสัมผัสพื้น
@@ -190,13 +329,13 @@ public class PlayerController : MonoBehaviour
                 jumpCount++; // เพิ่มจำนวนการกระโดดถ้ากระโดดอยู่ในอากาศ
             }
         }
-    }
+    }*/
     #endregion
      
     #region <HandleAbsorptionWithMana> //กดปุ่มซ้ายค้างเพื่อดูดวัตถุพร้อมกับการใช้มานาในการดูด
     private void HandleAbsorptionWithMana() //กดปุ่มซ้ายค้างเพื่อดูดวัตถุพร้อมกับการใช้มานาในการดูด
     {
-        if (Input.GetMouseButton(0)) // กดคลิกซ้ายค้าง
+        /*if (Input.GetMouseButton(0)) // กดคลิกซ้ายค้าง
         {
             isAbsorbing = true;
             manaTimer += Time.deltaTime;
@@ -221,7 +360,9 @@ public class PlayerController : MonoBehaviour
         else
         {
             isAbsorbing = false;
-        }
+        }*/
+        
+        AbsorbObjects(); // ทำการดูดวัตถุ
     }
     #endregion
     
@@ -243,7 +384,7 @@ public class PlayerController : MonoBehaviour
             {
                 objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
-                objRb.linearVelocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
+                objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
 
             // อัปเดตขนาดของ CircleCollider2D
@@ -358,7 +499,7 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region <OnCollisionEnter2D> //มีการชนกับวัตถุชนิด 2D โดยใช้เพื่อตรวจสอบว่าผู้เล่นอยู่บนพื้นหรือไม่ และตรวจจับกับดัก
-    private void OnCollisionEnter2D(Collision2D collision) //มีการชนกับวัตถุชนิด 2D โดยใช้เพื่อตรวจสอบว่าผู้เล่นอยู่บนพื้นหรือไม่ และตรวจจับกับดัก
+    /*private void OnCollisionEnter2D(Collision2D collision) //มีการชนกับวัตถุชนิด 2D โดยใช้เพื่อตรวจสอบว่าผู้เล่นอยู่บนพื้นหรือไม่ และตรวจจับกับดัก
     {
         // เช็คว่าชนพื้นหรือไม่
         if (collision.contacts[0].normal.y > 0.5f)
@@ -366,15 +507,15 @@ public class PlayerController : MonoBehaviour
             isGrounded = true;
             jumpCount = 0; // รีเซ็ตจำนวนการกระโดดเมื่อสัมผัสพื้น
         }
-    }
+    }*/
     #endregion
     
     #region <OnCollisionExit2D> //ผู้เล่นไม่อยู่บนพื้นแล้ว
-    private void OnCollisionExit2D(Collision2D collision) //ผู้เล่นไม่อยู่บนพื้นแล้ว
+    /*private void OnCollisionExit2D(Collision2D collision) //ผู้เล่นไม่อยู่บนพื้นแล้ว
     {
         // เมื่อไม่อยู่บนพื้น (อาจจะขึ้นจากพื้นหรืออยู่ในอากาศ)
         isGrounded = false;
-    }
+    }*/
     #endregion
 
     #region <OnDrawGizmos> //Editor แสดงวงกลมระยะการดูดวัตถุ
@@ -487,7 +628,7 @@ public class PlayerController : MonoBehaviour
     #endregion
     
     #region <RechargeMana> //รีเซ็ตมานา (เพิ่มมานา) เมื่อไม่ได้ทำการดูดวัตถุ
-    private void RechargeMana() //รีเซ็ตมานา (เพิ่มมานา) เมื่อไม่ได้ทำการดูดวัตถุ   
+    /*private void RechargeMana() //รีเซ็ตมานา (เพิ่มมานา) เมื่อไม่ได้ทำการดูดวัตถุ   
     {
         if (!isAbsorbing && currentMana < manaImages.Length) // เมื่อไม่ได้ดูดวัตถุและมานายังไม่เต็ม
         {
@@ -500,18 +641,18 @@ public class PlayerController : MonoBehaviour
                 UpdateManaUI();
             }
         }
-    }
+    }*/
     #endregion
 
     #region <UpdateManaUI>
-    private void UpdateManaUI() //อัปเดต UI ของมานา
+    /*private void UpdateManaUI() //อัปเดต UI ของมานา
     {
         // แสดง/ซ่อน Bar มานา ตามจำนวนมานาปัจจุบัน
         for (int i = 0; i < manaImages.Length; i++)
         {
             manaImages[i].enabled = i < currentMana;
         }
-    }
+    }*/
     #endregion
     
     

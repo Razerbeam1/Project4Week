@@ -14,7 +14,7 @@ public class BouncingObject : MonoBehaviour
             if (rb != null)
             {
                 // เพิ่มแรงกระโดดในแนวตั้ง
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, bounceForce);
+                rb.velocity = new Vector2(rb.velocity.x, bounceForce);
             }
         }
     }

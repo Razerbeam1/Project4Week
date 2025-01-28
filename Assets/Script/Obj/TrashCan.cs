@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
+
 public class TrashCan : MonoBehaviour
 {
     [Header("Trash Can Settings")]
