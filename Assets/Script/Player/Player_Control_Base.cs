@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Collections;
 
 public class Player_Control_Base : MonoBehaviour
 {
@@ -7,6 +9,10 @@ public class Player_Control_Base : MonoBehaviour
     private float weight;
     [SerializeField] private float baseWeight;
     public Transform holdPoint;
+    
+    private List<GameObject> pickedUpObjects = new List<GameObject>(); // List to store picked-up objects
+    private bool canPickup = true; // Cooldown flag to control picking up objects
+    public float pickupCooldown = 2f; // Cooldown duration in seconds
     
     void Start()
     {
@@ -18,8 +24,14 @@ public class Player_Control_Base : MonoBehaviour
     void Update()
     {
         HandleMovement();
-        
+        if (Input.GetButtonDown("Fire1") && pickedUpObjects.Count > 0)
+        {
+            Debug.Log("Clicked");
+            ReleaseAllTrashObjects();
+        }
     }
+
+    #region Movement
     private void HandleMovement()
     {
         float moveInput = Input.GetAxis("Horizontal");
@@ -36,45 +48,71 @@ public class Player_Control_Base : MonoBehaviour
             rb.AddTorque(torqueAmount);
         }
     }
+    #endregion
+
+    #region Magnet
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // Check if the collided object has the tag "TrashObject"
-        if (collision.gameObject.CompareTag("TrashObject"))
+        // Check if the player can pick up objects and the collided object has the tag "TrashObject"
+        if (canPickup && collision.gameObject.CompareTag("TrashObject") && !pickedUpObjects.Contains(collision.gameObject))
         {
-            Debug.Log("touch");
-            // Get the Rigidbody2D component of the collided object
-            Rigidbody2D objectRb = collision.gameObject.GetComponent<Rigidbody2D>();
+            // Pick up the object
+            GameObject trashObject = collision.gameObject;
 
-            if (objectRb != null)
+            // Remove the Rigidbody2D component from the trash object
+            Rigidbody2D rb = trashObject.GetComponent<Rigidbody2D>();
+            if (rb != null)
             {
-                // Remove the Rigidbody2D component
-                Destroy(objectRb);
-
-                // Set the object as a child of the player
-                collision.transform.SetParent(transform);
-
-                // Move the object to the holdPoint if specified
-                if (holdPoint != null)
-                {
-                    collision.transform.position = holdPoint.position;
-                }
-
-                Debug.Log($"{collision.gameObject.name} has been picked up and Rigidbody2D removed.");
+                Destroy(rb);
             }
+
+            // Set the trash object as a child of the player and move it to the hold point
+            trashObject.transform.SetParent(transform);
+            if (holdPoint != null)
+            {
+                trashObject.transform.position = holdPoint.position + Vector3.up * (pickedUpObjects.Count * 0.5f); // Stack objects slightly
+            }
+
+            // Add the trash object to the list
+            pickedUpObjects.Add(trashObject);
+
+            Debug.Log($"{trashObject.name} has been picked up.");
         }
-        
     }
-    public void DropTrash(Transform trashObject)
+    #endregion
+
+    #region Release_OBJ
+    private void ReleaseAllTrashObjects()
     {
-        Rigidbody2D objectRb = trashObject.GetComponent<Rigidbody2D>();
-
-        if (objectRb != null)
+        foreach (GameObject trashObject in pickedUpObjects)
         {
-            // Re-enable the object's Rigidbody2D
-            objectRb.simulated = true;
+            // Detach the trash object from the player
+            trashObject.transform.SetParent(null);
 
-            // Detach the object from the player
-            trashObject.SetParent(null);
+            // Add a Rigidbody2D component back to the trash object
+            Rigidbody2D rb = trashObject.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 1; // Optional: Set gravity scale to default or custom value
+
+            Debug.Log($"{trashObject.name} has been released.");
         }
+
+        // Clear the list of picked-up objects
+        pickedUpObjects.Clear();
+
+        // Start the cooldown before picking up objects again
+        StartCoroutine(PickupCooldown());
     }
+    #endregion
+
+    #region Magnet_Cooldown
+    private IEnumerator PickupCooldown()
+    {
+        canPickup = false; // Disable picking up objects
+        Debug.Log("Pickup disabled for 2 seconds.");
+        yield return new WaitForSeconds(pickupCooldown); // Wait for the cooldown duration
+        canPickup = true; // Re-enable picking up objects
+        Debug.Log("Pickup re-enabled.");
+    }
+    #endregion
+    
 }
