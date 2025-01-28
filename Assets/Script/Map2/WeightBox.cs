@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class WeightBox : MonoBehaviour
 {
-    public float maxWeight = 3f; // น้ำหนักสูงสุดที่ต้องการเพื่อเปิดประตู
+    [SerializeField] public float maxWeight; // น้ำหนักสูงสุดที่ต้องการเพื่อเปิดประตู
     public Transform door; // อ้างอิงประตูที่ต้องเปิด
-    public float doorOpenYPosition = 5f; // ตำแหน่ง Y เมื่อประตูเปิดสุด
-    public float openSpeed = 2f; // ความเร็วในการเปิดประตู
+    [SerializeField] public float doorOpenYPosition; // ตำแหน่ง Y เมื่อประตูเปิดสุด
+    [SerializeField] public float openSpeed; // ความเร็วในการเปิดประตู
 
     private float currentWeight = 0f; // น้ำหนักปัจจุบันในกล่อง
     private float doorClosedYPosition; // ตำแหน่งเริ่มต้นของประตูในแกน Y

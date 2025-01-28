@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class BreakableBridge : MonoBehaviour
 {
-    public float maxWeight = 6f; // น้ำหนักสูงสุดที่สะพานสามารถรับได้
+    [SerializeField] public float maxWeight; // น้ำหนักสูงสุดที่สะพานสามารถรับได้
 
     private float currentWeight = 0f; // น้ำหนักปัจจุบันบนสะพาน
     private bool isBroken = false; // เช็คว่าสะพานพังแล้วหรือยัง

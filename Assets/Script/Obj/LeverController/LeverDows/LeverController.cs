@@ -19,7 +19,7 @@ public class LeverController : MonoBehaviour
     [SerializeField] float moveDistance; // ระยะที่ Dor จะเลื่อนลง
 
     private List<GameObject> collectedObjects = new List<GameObject>(); // เก็บ obj ที่โยนใส่คันโยก
-    private int requiredTrashObjects = 3; // จำนวน obj ที่ต้องการ
+    private int requiredTrashObjects = 2; // จำนวน obj ที่ต้องการ
 
     void Start()
     {

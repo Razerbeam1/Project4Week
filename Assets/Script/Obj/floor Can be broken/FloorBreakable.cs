@@ -3,17 +3,24 @@ using UnityEngine;
 
 public class FloorBreakable : MonoBehaviour
 {
-    [SerializeField] private float timeToBreak; // เวลาที่ต้องใช้ในการทำให้พื้นพัง 10f
-    [SerializeField] private float weightThreshold; // น้ำหนักที่ทำให้พื้นพังทันที 100f
+    [SerializeField] private float timeToBreak; // เวลาที่ต้องใช้ในการทำให้พื้นพัง
+    [SerializeField] private float weightThreshold; // น้ำหนักที่ทำให้พื้นพังทันที
     [SerializeField] private Rigidbody2D floorRigidbody; // Rigidbody ของพื้น
-    [SerializeField] private bool destroyAfterFall = true; // ถ้า true พื้นจะถูกลบหลังตกลง
+    [SerializeField] private float resetDelay; // เวลาที่ใช้รอก่อนรีเซ็ตกลับตำแหน่งเดิม
 
     private float timePlayerOnFloor = 0f; // เวลาที่ผู้เล่นยืนบนพื้น
     private bool isPlayerOnFloor = false; // ตรวจสอบว่าผู้เล่นอยู่บนพื้นหรือไม่
     private bool isBroken = false; // ตรวจสอบว่าพื้นพังแล้วหรือยัง
 
+    private Vector3 initialPosition; // ตำแหน่งเริ่มต้นของพื้น
+    private Quaternion initialRotation; // การหมุนเริ่มต้นของพื้น
+
     private void Start()
     {
+        // เก็บตำแหน่งและการหมุนเริ่มต้น
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
+
         if (floorRigidbody == null)
         {
             floorRigidbody = GetComponent<Rigidbody2D>();
@@ -78,16 +85,30 @@ public class FloorBreakable : MonoBehaviour
             floorRigidbody.bodyType = RigidbodyType2D.Dynamic;
         }
 
-        // ถ้ากำหนดให้ลบพื้นหลังจากตก ให้ทำลบพื้น
-        if (destroyAfterFall)
-        {
-            StartCoroutine(DestroyFloorAfterFall());
-        }
+        // รอรีเซ็ตพื้นกลับตำแหน่งเดิม
+        StartCoroutine(ResetFloor());
     }
 
-    private IEnumerator DestroyFloorAfterFall()
+    private IEnumerator ResetFloor()
     {
-        yield return new WaitForSeconds(1f); // รอให้พื้นตกลงจนหมด 1 วินาที 
-        Destroy(gameObject); // ลบพื้นออกจากฉาก
+        yield return new WaitForSeconds(resetDelay); // รอให้พื้นตกลงไปก่อน
+
+        // รีเซ็ตตำแหน่งและการหมุน
+        transform.position = initialPosition;
+        transform.rotation = initialRotation;
+
+        // รีเซ็ต Rigidbody กลับไปเป็น Static
+        if (floorRigidbody != null)
+        {
+            floorRigidbody.bodyType = RigidbodyType2D.Static;
+            floorRigidbody.velocity = Vector2.zero; // รีเซ็ตความเร็วของ Rigidbody
+            floorRigidbody.angularVelocity = 0f;   // รีเซ็ตการหมุนของ Rigidbody
+        }
+
+        // รีเซ็ตสถานะพื้น
+        isBroken = false;
+        timePlayerOnFloor = 0f;
+
+        Debug.Log("Floor has been reset to its original position.");
     }
 }
