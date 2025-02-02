@@ -4,6 +4,7 @@ using UnityEngine;
 public class Button : MonoBehaviour
 {
     private Rigidbody2D batteryRb;
+    private bool nPress = true;
 
     private void Start()
     {
@@ -23,12 +24,16 @@ public class Button : MonoBehaviour
     {
         Debug.Log("Trigger enter");
         // Check if the object entering the trigger has the tag "Player"
-        if (collision.CompareTag("Player") && batteryRb != null)
+        if (collision.CompareTag("Player") && batteryRb != null && nPress)
         {
             // Add 5 velocity going sideways (right direction)
             batteryRb.linearVelocity = new Vector2(-20, batteryRb.linearVelocity.y);
             Debug.Log("Added sideways velocity to Battery.");
         }
     }
-    
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        nPress = false;
+    }
 }
