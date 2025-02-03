@@ -10,7 +10,7 @@ public class Player_Control_Base : MonoBehaviour
     [SerializeField] private float baseWeight;
     public Transform holdPoint;
     
-    private List<GameObject> pickedUpObjects = new List<GameObject>(); // List to store picked-up objects
+    public List<GameObject> pickedUpObjects = new List<GameObject>(); // List to store picked-up objects
     private bool canPickup = true; // Cooldown flag to control picking up objects
     public float pickupCooldown = 2f; // Cooldown duration in seconds
     
@@ -89,9 +89,16 @@ public class Player_Control_Base : MonoBehaviour
             // Detach the trash object from the player
             trashObject.transform.SetParent(null);
 
-            // Add a Rigidbody2D component back to the trash object
-            Rigidbody2D rb = trashObject.AddComponent<Rigidbody2D>();
-            rb.gravityScale = 1; // Optional: Set gravity scale to default or custom value
+            // Check if the trash object already has a Rigidbody2D
+            Rigidbody2D rb = trashObject.GetComponent<Rigidbody2D>();
+            if (rb == null)
+            {
+                // Add Rigidbody2D only if it doesn't exist
+                rb = trashObject.AddComponent<Rigidbody2D>();
+            }
+
+            // Set gravity scale (optional)
+            rb.gravityScale = 1;
 
             Debug.Log($"{trashObject.name} has been released.");
         }
