@@ -12,10 +12,7 @@ public class Player_controller2 : MonoBehaviour
     private bool isOnGround = false; // ตรวจสอบว่าอยู่บนพื้นหรือไม่
     private Vector2 groundNormal; // ทิศทาง Normal ของพื้น
     
-    // ส่วนที่เกี่ยวข้องกับการดูดและการปล่อยวัตถุ
-    //private bool canAbsorb = true; // ตัวแปรบ่งชี้ว่า Player สามารถดูดวัตถุได้หรือไม่
-    //private float absorbCooldown = 2f; // ตั้งเวลา Cooldown หลังจากหยุดการดูด (ในวินาที)
-    //private float currentCooldownTime = 0f; // เวลาปัจจุบันที่หยุดการดูด
+    
     // เพิ่มเพื่อให้ Player ร่วงลง
     private bool isFalling = false;
     
@@ -36,6 +33,11 @@ public class Player_controller2 : MonoBehaviour
         {
             playerRb.mass = 1f; // กำหนดมวลเริ่มต้นของ Player เป็น 1
         }
+        
+        // กำหนดมวลเริ่มต้นของ Player
+        playerMass = rb2d.mass;
+        
+        UpdateAbsorbCountUI();
 
     }
 
@@ -90,6 +92,8 @@ public class Player_controller2 : MonoBehaviour
 
         // อัปเดต UI
         UpdateAbsorbCountUI();
+
+        UpdateHPUI();
 
         // ตั้งเวลา Cooldown 2 วินาที
         currentCooldownTime = absorbCooldown;
@@ -219,7 +223,7 @@ public class Player_controller2 : MonoBehaviour
     [SerializeField] private Transform absorbPoint; // จุดที่ใช้ดูดวัตถุ
     [SerializeField] private float absorbRange; // ระยะการดูดวัตถุ
     [SerializeField] private GameObject[] absorbableObjects; // วัตถุที่สามารถดูดได้
-    [SerializeField] private float sizeIncreaseFactor; // ปริมาณการขยายตัวของ Player ต่อวัตถุหนึ่งชิ้น
+    [SerializeField] private float sizeIncreaseFactor; // ปริมาณการขยายตัวของ Player ต่อวัตถุหนึ่งชิ้น //0.6
     [SerializeField] private Image[] absorbCountImages; // Array ของรูปภาพ UI
     [SerializeField] private int maxAbsorbableObjects; // จำนวนวัตถุสูงสุดที่ดูดได้
     
@@ -266,6 +270,7 @@ public class Player_controller2 : MonoBehaviour
             obj.transform.parent = null; // แยก Obj ออกจาก Player
             obj.SetActive(true); // เปิดใช้งานวัตถุ
 
+            // เปิดการคำนวณฟิสิกส์ของ Obj
             Rigidbody2D objRb = obj.GetComponent<Rigidbody2D>();
             if (objRb != null)
             {
@@ -273,6 +278,13 @@ public class Player_controller2 : MonoBehaviour
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
                 objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
+            
+            /*// เปิดการชนกันของ BoxCollider2D ของ Obj
+            BoxCollider2D objCollider = obj.GetComponent<BoxCollider2D>();
+            if (objCollider != null)
+            {
+                objCollider.enabled = true; // เปิดการชนกันของ BoxCollider2D
+            }*/
 
             // ลดน้ำหนักที่เพิ่มขึ้นจากการดูดวัตถุ
             weight -= obj.GetComponent<Rigidbody2D>().mass; // ลดน้ำหนักจาก Mass ของวัตถุที่ปล่อยออกไป
@@ -377,6 +389,13 @@ public class Player_controller2 : MonoBehaviour
                 {
                     objRb.simulated = false; // ปิดการคำนวณฟิสิกส์
                 }
+                
+                /*// ปิด BoxCollider2D ของ Obj ที่ถูกดูด
+                BoxCollider2D objCollider = obj.GetComponent<BoxCollider2D>();
+                if (objCollider != null)
+                {
+                    objCollider.enabled = false; // ปิดการชนกันของ BoxCollider2D
+                }*/
 
                 // ปิดการชนกันระหว่าง Player และ Obj
                 Collider2D objCollider = obj.GetComponent<Collider2D>();
@@ -395,6 +414,14 @@ public class Player_controller2 : MonoBehaviour
                 // อัปเดตขนาด Collider ของ Player
                 UpdatePlayerCollider();
 
+                // เพิ่มการควบคุมแรงโน้มถ่วงของ Player ให้เหมาะสม
+                Rigidbody2D playerRb = GetComponent<Rigidbody2D>();
+                if (playerRb != null)
+                {
+                    // ถ้าต้องการให้ Player หยุดไหลลง, ปรับแรงโน้มถ่วง
+                    playerRb.gravityScale = 0.5f;  // ลดแรงโน้มถ่วงหรือปรับแต่งตามต้องการ
+                }
+                
                 Debug.Log("ดูดวัตถุ: " + obj.name);
                 UpdateAbsorbCountUI(); // อัปเดต UI
 
@@ -409,7 +436,7 @@ public class Player_controller2 : MonoBehaviour
     // ฟังก์ชันสำหรับอัปเดตมวลของ Player
     private void UpdatePlayerMass()
     { 
-        /*if (rb == null) return;
+        if (rb == null) return;
 
         float baseMass = 1f; // มวลเริ่มต้นของ Player
         float massPerObject = 1; // มวลที่เพิ่มขึ้นต่อวัตถุ 1 ชิ้น
@@ -424,11 +451,11 @@ public class Player_controller2 : MonoBehaviour
         if (rb == null) return;
 
         rb.mass = baseMass + (absorbedObjects.Count * massPerObject);
-        Debug.Log("อัปเดตมวลของ Player: " + rb.mass);*/
+        Debug.Log("อัปเดตมวลของ Player: " + rb.mass);
         
         // คำนวณมวลจากจำนวนวัตถุที่ดูด
         // ตรวจสอบว่ามีการกำหนด absorbedObjects (รายการวัตถุที่ดูดได้)
-        float totalMass = 0f;
+        /*float totalMass = 0f;
 
         foreach (GameObject obj in absorbedObjects) // สมมติว่า absorbedObjects คือ List<GameObject>
         {
@@ -440,7 +467,7 @@ public class Player_controller2 : MonoBehaviour
         }
 
         playerMass = totalMass; // อัปเดตมวลรวมของ Player
-        AdjustSpeedBasedOnMass(); // ปรับความเร็วตามมวล
+        AdjustSpeedBasedOnMass(); // ปรับความเร็วตามมวล*/
     }
     
     // ฟังก์ชันปรับความเร็วตามมวล
@@ -532,10 +559,22 @@ public class Player_controller2 : MonoBehaviour
     #region <UpdateAbsorbCountUI> //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     private void UpdateAbsorbCountUI() //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     {
-        // แสดง/ซ่อนจุด UI ตามจำนวนวัตถุที่ดูดได้
+        /*// แสดง/ซ่อนจุด UI ตามจำนวนวัตถุที่ดูดได้
         for (int i = 0; i < absorbCountImages.Length; i++)
         {
             absorbCountImages[i].enabled = i < absorbedObjects.Count;
+        }*/
+        
+        // ซ่อน UI ทั้งหมดก่อน
+        foreach (Image img in absorbCountImages)
+        {
+            img.enabled = false; // ซ่อนทุกภาพ
+        }
+
+        // เปิด UI ตามจำนวนวัตถุที่ดูดได้
+        for (int i = 0; i < absorbedObjects.Count && i < absorbCountImages.Length; i++)
+        {
+            absorbCountImages[i].enabled = true;
         }
     }
     #endregion
@@ -583,11 +622,19 @@ public class Player_controller2 : MonoBehaviour
         }
     }
     #endregion
+    private void Awake()
+    {
+        // ซ่อน UI ของ HP ทุกรูปภาพในตอนเริ่มต้น
+        foreach (Image img in hpImages)
+        {
+            img.enabled = false; // ซ่อนทุกภาพในตอนเริ่มต้น
+        }
+    }
     
     #region <UpdateHPUI> //อัปเดต UI ของ HP ของผู้เล่น
     private void UpdateHPUI() //อัปเดต UI ของ HP ของผู้เล่น
     {
-        for (int i = 0; i < hpImages.Length; i++)
+        /*for (int i = 0; i < hpImages.Length; i++)
         {
             if (i < hp)
             { 
@@ -600,6 +647,25 @@ public class Player_controller2 : MonoBehaviour
         }
         
         // ตรวจสอบ HP และเรียก Game Over ถ้า HP หมด
+        if (hp <= 0)
+        {
+            HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม
+        }*/
+        
+        // ปิดรูปภาพ HP ทั้งหมดก่อน
+        foreach (Image img in hpImages)
+        {
+            img.enabled = false; // ซ่อนทุกภาพ
+        }
+
+        // เปิด UI ตามจำนวน HP ที่เหลือ
+        for (int i = 0; i < hp && i < hpImages.Length; i++)
+        {
+            hpImages[i].enabled = true;
+           // hpImages[i].color = Color.white; // เปิดสีปกติ
+        }
+
+        // ถ้าเปิดรูปภาพครบหมด และ HP หมด ให้ทำให้เกมจบ
         if (hp <= 0)
         {
             HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม

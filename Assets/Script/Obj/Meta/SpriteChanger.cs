@@ -30,6 +30,14 @@ public class SpriteChanger : MonoBehaviour
         {
             Debug.LogError("Rigidbody2D is missing from the GameObject. Please add a Rigidbody2D.");
         }
+        
+        // ตรวจสอบว่าเป็นลูกของ Player หรือไม่
+        if (transform.parent != null && transform.parent.CompareTag("Player"))
+        {
+            // หากเป็นลูกของ Player ปิดการใช้งานสคริปต์
+            enabled = false; // ปิดการใช้งานสคริปต์
+            Debug.Log("This GameObject is a child of the Player. Disabling SpriteChanger script.");
+        }
     }
 
     private void Update()
