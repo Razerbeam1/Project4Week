@@ -3,13 +3,23 @@ using UnityEngine.SceneManagement;
 
 public class win : MonoBehaviour
 {
-    public void RestartGame()
-    {
-        // รีเซ็ต Time.timeScale เป็นค่าเริ่มต้น (1)
-        Time.timeScale = 1f;
 
-        // โหลดฉากปัจจุบันใหม่
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    public GameObject Main_menu;
+    public GameObject credit;
+    public GameObject WIN;
+
+    public void Mainmenu ()
+    {
+        WIN.SetActive(false);
+        Main_menu.SetActive(true);
     }
-    
+
+    public void Credit()
+    {
+        WIN.SetActive(false);
+        credit.SetActive(true);
+    }
+
+
+
 }

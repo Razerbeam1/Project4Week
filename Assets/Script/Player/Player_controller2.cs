@@ -414,21 +414,6 @@ public class Player_controller2 : MonoBehaviour
         Debug.Log("อัปเดตมวลของ Player: " + rb.mass);
     }
     
-    // ฟังก์ชันปรับความเร็วตามมวล
-    private void AdjustSpeedBasedOnMass()
-    {
-        // กำหนดค่าความเร็วสูงสุดที่ Player สามารถเดินได้
-        float baseSpeed = 10f;  // ความเร็วพื้นฐาน
-        float speedReductionFactor = 0.1f;  // ปรับตามสัดส่วนมวล
-
-        // คำนวณความเร็วใหม่โดยการลดความเร็วตามมวล
-        moveSpeed = baseSpeed / (1 + speedReductionFactor * playerMass);
-
-        // ตัวอย่างการจำกัดความเร็วไม่ให้ต่ำกว่า speedMin
-        float speedMin = 3f;
-        moveSpeed = Mathf.Max(moveSpeed, speedMin);  // ความเร็วไม่ต่ำกว่า speedMin
-    }
-    
     #region <UpdatePlayerCollider> //อัปเดตขนาดของ CircleCollider2D
     private void UpdatePlayerCollider() //อัปเดตขนาดของ CircleCollider2D
     {

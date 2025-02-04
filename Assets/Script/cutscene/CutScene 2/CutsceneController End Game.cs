@@ -34,7 +34,7 @@ public class CutsceneControllerEndGame : MonoBehaviour
         }
         
         // เมื่อ Cutscene จบ → ปิด Panel Cutscene และเปิด Panel Game System
-        EndCutscene();
+        EndCutscene2();
     }
 
     private IEnumerator FadeIn(Image image)
@@ -54,11 +54,11 @@ public class CutsceneControllerEndGame : MonoBehaviour
         image.color = tempColor;
     }
     
-    private void EndCutscene()
+    private void EndCutscene2()
     {
         WinPanel.SetActive(true);
         cutscenePanel.SetActive(false);
-        WinPanel.transform.SetParent(null); // แยก WinPanel ออกจาก cutscenePanel
+        
     }
 
 }

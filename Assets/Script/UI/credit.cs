@@ -28,4 +28,16 @@ public class credit : MonoBehaviour
         backgroundImage.sprite = backgroundSprites[currentIndex];
         currentIndex = (currentIndex + 1) % backgroundSprites.Length;
     }
+    
+    public GameObject Main_menu;
+    public GameObject Credit;
+    
+    public void Mainmenu ()
+    {
+        Credit.SetActive(false);
+        Main_menu.SetActive(true);
+    }
+    
+    
+    
 }

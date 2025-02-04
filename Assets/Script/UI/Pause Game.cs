@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PauseGame : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class PauseGame : MonoBehaviour
     public Sprite[] backgroundSprites; // ใส่รูปภาพใน Inspector
     public GameObject pausePanel; // Panel ที่ใช้แสดงเมื่อเกมหยุด
     private int currentIndex = 0;
+
+    public GameObject mainmenu;
 
     void Start()
     {
@@ -60,5 +63,22 @@ public class PauseGame : MonoBehaviour
         
         backgroundImage.sprite = backgroundSprites[currentIndex];
         currentIndex = (currentIndex + 1) % backgroundSprites.Length;
+    }
+    
+    
+    public void RestartGame()
+    {
+        // รีเซ็ต Time.timeScale เป็นค่าเริ่มต้น (1)
+        Time.timeScale = 1f;
+
+        // โหลดฉากปัจจุบันใหม่
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void Mainmenu()
+    {
+        pausePanel.SetActive(false);
+        mainmenu.SetActive(true);
+        
     }
 }
