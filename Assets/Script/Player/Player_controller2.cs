@@ -41,6 +41,9 @@ public class Player_controller2 : MonoBehaviour
 
     }
 
+    public GameObject pausePanel; // Panel ที่ใช้แสดงเมื่อเกมหยุด
+    private int currentIndex = 0;
+    
     void Update()
     {
         Movement();
@@ -63,39 +66,64 @@ public class Player_controller2 : MonoBehaviour
         if (Input.GetMouseButtonDown(0)) // คลิกเมาส์ซ้าย (Mouse0)
         {
             StopAbsorbingAndFall();
+            
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Escape)) // กด ESC เพื่อหยุดเกม
+        {
+            Debug.Log("ESC Key Pressed");  // ทดสอบดูว่าปุ่ม ESC ถูกกดจริงหรือไม่
+            TogglePause();
         }
     }
-    
-    private void StopAbsorbingAndFall()
+    // ฟังก์ชันสำหรับสลับสถานะการหยุดเกม
+    private void TogglePause()
     {
-        // หยุดการดูดและทำให้ Player ร่วงลง
+        if (pausePanel.activeSelf) // ถ้า Panel Pause เปิดอยู่
+        {
+            ResumeGame();
+        }
+        else // ถ้า Panel Pause ปิดอยู่
+        {
+            PauseGameSystem();
+        }
+    }
+
+    // ฟังก์ชันที่หยุดเกม
+    private void PauseGameSystem()
+    {
+        Time.timeScale = 0f; // หยุดเกม
+        pausePanel.SetActive(true); // เปิดแสดง Panel Pause
+    }
+
+    // ฟังก์ชันที่เริ่มเกม
+    private void ResumeGame()
+    {
+        Time.timeScale = 1f; // เริ่มเกมใหม่
+        pausePanel.SetActive(false); // ซ่อน Panel Pause
+    }
+    private void StopAbsorbingAndFall()
+    { 
         canAbsorb = false;
         rb2d.gravityScale = 1f; // เปิดการโน้มถ่วง เพื่อให้ Player ร่วงลง
 
-        // วัตถุที่ถูกดูดติดจะถูกปล่อยออก
         foreach (GameObject obj in absorbedObjects)
         {
-            // ปล่อยออกจาก Player
-            obj.transform.parent = null; // แยกจาก Player
-            obj.SetActive(true); // เปิดใช้งานวัตถุ
+            obj.transform.parent = null;
+            obj.SetActive(true);
 
             Rigidbody2D objRb = obj.GetComponent<Rigidbody2D>();
             if (objRb != null)
             {
-                objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
-                objRb.gravityScale = 1f; // เปิดการโน้มถ่วงของวัตถุ
+                objRb.simulated = true;
+                objRb.gravityScale = 1f;
             }
         }
 
-        // เคลียร์ List ของวัตถุที่ถูกดูด
-        absorbedObjects.Clear();
+        absorbedObjects.Clear(); // ล้างวัตถุที่ดูดติด
 
-        // อัปเดต UI
-        UpdateAbsorbCountUI();
+        UpdateAbsorbCountUI(); // อัปเดต UI
+        UpdatePlayerCollider(); // 📌 อัปเดตขนาด Collider ใหม่ หลังจากปล่อย Obj
 
-        UpdateHPUI();
-
-        // ตั้งเวลา Cooldown 2 วินาที
         currentCooldownTime = absorbCooldown;
         Debug.Log("หยุดการดูดและร่วงลงไป 2 วินาที");
     }
@@ -279,13 +307,6 @@ public class Player_controller2 : MonoBehaviour
                 objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
             }
             
-            /*// เปิดการชนกันของ BoxCollider2D ของ Obj
-            BoxCollider2D objCollider = obj.GetComponent<BoxCollider2D>();
-            if (objCollider != null)
-            {
-                objCollider.enabled = true; // เปิดการชนกันของ BoxCollider2D
-            }*/
-
             // ลดน้ำหนักที่เพิ่มขึ้นจากการดูดวัตถุ
             weight -= obj.GetComponent<Rigidbody2D>().mass; // ลดน้ำหนักจาก Mass ของวัตถุที่ปล่อยออกไป
 
@@ -308,60 +329,6 @@ public class Player_controller2 : MonoBehaviour
     #region <AbsorbObjects> //ดูดวัตถุที่อยู่ในระยะที่กำหนด
     private void AbsorbObjects()
     {
-        /*if (!canAbsorb) return; // ถ้าไม่สามารถดูดได้ ให้หยุดการทำงาน
-
-        // ตรวจจับวัตถุที่อยู่รอบ Player ในระยะ absorbRange
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, absorbRange);
-
-        foreach (Collider2D hit in hits)
-        {
-            if (IsAbsorbable(hit.gameObject))
-            {
-                GameObject obj = hit.gameObject;
-
-                // ตั้งค่าให้ Obj ติดกับ Player โดยตรง
-                obj.transform.parent = this.transform; // ทำให้ Obj เป็นลูกของ Player
-                float angle = Random.Range(0, 360); // มุมสุ่มรอบตัว Player
-                float radius = Random.Range(0.5f, 1.0f); // ระยะห่างจาก Player
-                obj.transform.localPosition = new Vector3(
-                    Mathf.Cos(angle * Mathf.Deg2Rad) * radius,
-                    Mathf.Sin(angle * Mathf.Deg2Rad) * radius,
-                    0
-                );
-
-                // ปิดการคำนวณฟิสิกส์ของ Obj
-                Rigidbody2D objRb = obj.GetComponent<Rigidbody2D>();
-                if (objRb != null)
-                {
-                    objRb.simulated = false; // ปิดการคำนวณฟิสิกส์
-
-                    // ตั้งค่ามวลของวัตถุ
-                    objRb.mass = 2f; // กำหนดมวลของวัตถุเป็น 2 หน่วย
-                }
-
-                // ปิดการชนกันระหว่าง Player และ Obj
-                Collider2D objCollider = obj.GetComponent<Collider2D>();
-                Collider2D playerCollider = GetComponent<Collider2D>();
-                if (objCollider != null && playerCollider != null)
-                {
-                    Physics2D.IgnoreCollision(objCollider, playerCollider, true); // ปิดการชนกันกับ Player
-                }
-
-                // เพิ่ม Obj เข้า List ของวัตถุที่ดูดได้
-                absorbedObjects.Add(obj);
-
-                // อัปเดตขนาด Collider ของ Player
-                UpdatePlayerCollider();
-
-                Debug.Log("ดูดวัตถุ: " + obj.name);
-                UpdateAbsorbCountUI(); // อัปเดต UI
-
-                return;
-            }
-        }
-
-        Debug.Log("ไม่พบวัตถุในระยะดูด");*/
-        
         if (!canAbsorb) return; // ถ้าไม่สามารถดูดได้ ให้หยุดการทำงาน
 
         // ตรวจจับวัตถุที่อยู่รอบ Player ในระยะ absorbRange
@@ -389,13 +356,6 @@ public class Player_controller2 : MonoBehaviour
                 {
                     objRb.simulated = false; // ปิดการคำนวณฟิสิกส์
                 }
-                
-                /*// ปิด BoxCollider2D ของ Obj ที่ถูกดูด
-                BoxCollider2D objCollider = obj.GetComponent<BoxCollider2D>();
-                if (objCollider != null)
-                {
-                    objCollider.enabled = false; // ปิดการชนกันของ BoxCollider2D
-                }*/
 
                 // ปิดการชนกันระหว่าง Player และ Obj
                 Collider2D objCollider = obj.GetComponent<Collider2D>();
@@ -429,7 +389,7 @@ public class Player_controller2 : MonoBehaviour
             }
         }
 
-       // Debug.Log("ไม่พบวัตถุในระยะดูด");
+         // Debug.Log("ไม่พบวัตถุในระยะดูด");
     }
     #endregion
 
@@ -452,22 +412,6 @@ public class Player_controller2 : MonoBehaviour
 
         rb.mass = baseMass + (absorbedObjects.Count * massPerObject);
         Debug.Log("อัปเดตมวลของ Player: " + rb.mass);
-        
-        // คำนวณมวลจากจำนวนวัตถุที่ดูด
-        // ตรวจสอบว่ามีการกำหนด absorbedObjects (รายการวัตถุที่ดูดได้)
-        /*float totalMass = 0f;
-
-        foreach (GameObject obj in absorbedObjects) // สมมติว่า absorbedObjects คือ List<GameObject>
-        {
-            SpriteChanger absorbable = obj.GetComponent<SpriteChanger>();
-            if (absorbable != null)
-            {
-                totalMass += absorbable.mass; // ดึงค่า mass จาก Absorbable
-            }
-        }
-
-        playerMass = totalMass; // อัปเดตมวลรวมของ Player
-        AdjustSpeedBasedOnMass(); // ปรับความเร็วตามมวล*/
     }
     
     // ฟังก์ชันปรับความเร็วตามมวล
@@ -499,30 +443,32 @@ public class Player_controller2 : MonoBehaviour
             collider.radius = initialColliderRadius * newScale; // อัปเดตรัศมี Collider
         }
         
-        // เช็คว่ามี Collider ชนิด CircleCollider2D หรือไม่
         CircleCollider2D playerCollider = GetComponent<CircleCollider2D>();
+
         if (playerCollider != null)
         {
-            // เก็บค่า radius เริ่มต้นไว้
-            float initialRadius = 0.5f; // กำหนดค่ารัศมีเริ่มต้นที่ต้องการ
+            float initialRadius = 0.5f; // ขนาด Collider เริ่มต้น
 
-            // ระยะใหม่ให้ครอบคลุมทุก Obj ที่ดูดติด
-            float maxDistance = 0f;
-
-            foreach (GameObject obj in absorbedObjects)
+            if (absorbedObjects.Count == 0) 
             {
-                float distance = Vector3.Distance(transform.position, obj.transform.position);
-                if (distance > maxDistance)
-                {
-                    maxDistance = distance;
-                }
+                playerCollider.radius = initialRadius; // 📌 ถ้าไม่มี Obj ที่ดูดติด กลับไปขนาดเริ่มต้น
             }
+            else
+            {
+                float maxDistance = 0f;
 
-            // เพิ่มระยะเผื่ออีกเล็กน้อย (0.3f)
-            float newRadius = maxDistance + 0.3f;
+                foreach (GameObject obj in absorbedObjects)
+                {
+                    float distance = Vector3.Distance(transform.position, obj.transform.position);
+                    if (distance > maxDistance)
+                    {
+                        maxDistance = distance;
+                    }
+                }
 
-            // ป้องกันไม่ให้ลดลงต่ำกว่ารัศมีเริ่มต้น
-            playerCollider.radius = Mathf.Max(newRadius, initialRadius);
+                float newRadius = maxDistance + 0.3f;
+                playerCollider.radius = Mathf.Max(newRadius, initialRadius);
+            }
 
             Debug.Log("ขนาด Collider ใหม่: " + playerCollider.radius);
         }
@@ -559,12 +505,6 @@ public class Player_controller2 : MonoBehaviour
     #region <UpdateAbsorbCountUI> //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     private void UpdateAbsorbCountUI() //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     {
-        /*// แสดง/ซ่อนจุด UI ตามจำนวนวัตถุที่ดูดได้
-        for (int i = 0; i < absorbCountImages.Length; i++)
-        {
-            absorbCountImages[i].enabled = i < absorbedObjects.Count;
-        }*/
-        
         // ซ่อน UI ทั้งหมดก่อน
         foreach (Image img in absorbCountImages)
         {
@@ -582,7 +522,7 @@ public class Player_controller2 : MonoBehaviour
     #region <OnTriggerEnter2D> //ตรวจจับการชนกับ Trigger
     private void OnTriggerEnter2D(Collider2D other) //ตรวจจับการชนกับ Trigger
     {
-        // ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
+        /*// ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
         if (other.CompareTag("FallTrigger")) // FallTrigger คือตำแหน่งที่ใช้ตรวจสอบการตกจากแมป
         {
             // ให้ Player กลับไปที่จุดเช็คพอยต์ล่าสุด
@@ -610,6 +550,45 @@ public class Player_controller2 : MonoBehaviour
                 // คุณสามารถเพิ่ม Logic การหยุดเกมหรือแสดงเมนู Game Over ที่นี่
             }
             
+            for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
+            {
+                if (Checkpoint.checkpointReached[i]) 
+                {
+                    transform.position = Checkpoint.checkpointPositions[i]; // กลับไปที่เช็คพอยต์ล่าสุด
+                    Debug.Log("Player fell. Respawning at checkpoint " + (i + 1));
+                    break;
+                }
+            }
+        }*/
+        
+        // ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
+        if (other.CompareTag("FallTrigger")) // FallTrigger คือตำแหน่งที่ใช้ตรวจสอบการตกจากแมป
+        {
+            // ให้ Player กลับไปที่จุดเช็คพอยต์ล่าสุด
+            for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
+            {
+                if (Checkpoint.checkpointReached[i]) 
+                {
+                    transform.position = Checkpoint.checkpointPositions[i]; // กลับไปที่เช็คพอยต์ล่าสุด
+                    Debug.Log("Player fell. Respawning at checkpoint " + (i + 1));
+                    break;
+                }
+            }
+        }
+    
+        if (other.CompareTag("Trap")) // เมื่อชนกับกับดัก
+        {
+            // ลด HP และอัปเดต UI
+            hp--;
+            UpdateHPUI();  // เรียกอัปเดต UI หลังจากที่ HP ลดลง
+
+            // เช็คว่าถ้า HP หมด (Game Over)
+            if (hp <= 0)
+            {
+                Debug.Log("Game Over!");
+            }
+
+            // ถ้า HP หมด ให้กลับไปที่เช็คพอยต์ล่าสุด
             for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
             {
                 if (Checkpoint.checkpointReached[i]) 
@@ -652,20 +631,26 @@ public class Player_controller2 : MonoBehaviour
             HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม
         }*/
         
+        // ตรวจสอบให้ HP ไม่เกินจำนวนภาพที่มี
+        hp = Mathf.Min(hp, hpImages.Length); // ทำให้ HP ไม่เกินจำนวนภาพ
+
         // ปิดรูปภาพ HP ทั้งหมดก่อน
         foreach (Image img in hpImages)
         {
             img.enabled = false; // ซ่อนทุกภาพ
         }
 
-        // เปิด UI ตามจำนวน HP ที่เหลือ
-        for (int i = 0; i < hp && i < hpImages.Length; i++)
+        // เปิดรูปภาพตามลำดับของ HP
+        for (int i = 0; i < hp; i++)
         {
-            hpImages[i].enabled = true;
-           // hpImages[i].color = Color.white; // เปิดสีปกติ
+            if (i < hpImages.Length)
+            {
+                // เปิดรูปภาพตามลำดับ HP
+                hpImages[i].enabled = true; 
+            }
         }
 
-        // ถ้าเปิดรูปภาพครบหมด และ HP หมด ให้ทำให้เกมจบ
+        // ถ้า HP <= 0 ให้ทำการหยุดเกม
         if (hp <= 0)
         {
             HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม

@@ -6,6 +6,7 @@ public class BoxObject : MonoBehaviour
     // กำหนดตัวแปรสำหรับการแสดง Canvas Win
     [SerializeField] private GameObject winCanvas; // UI Canvas สำหรับการแสดงข้อความชนะ
     [SerializeField] private GameObject gamePlayCanvas; // UI Canvas สำหรับ Game Play
+    [SerializeField] private GameObject Game_system;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -25,6 +26,11 @@ public class BoxObject : MonoBehaviour
                 gamePlayCanvas.SetActive(false); // ปิด Canvas Game Play
             }
 
+            if (Game_system != null) 
+            {
+                Game_system.SetActive(false);
+            }
+
             
             // แสดง Canvas Win
             if (winCanvas != null)
@@ -33,7 +39,7 @@ public class BoxObject : MonoBehaviour
             }
 
             // หยุดเกมโดยการตั้งค่า Time.timeScale = 0
-            Time.timeScale = 0f;
+            //Time.timeScale = 0f;
 
             // บันทึกข้อความใน Console
             Debug.Log("Player reached the box! You Win!");
