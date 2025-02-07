@@ -26,6 +26,7 @@ public class Button : MonoBehaviour
         // Check if the object entering the trigger has the tag "Player"
         if (collision.CompareTag("Player") && batteryRb != null && nPress)
         {
+            batteryRb.gravityScale = 1;
             // Add 5 velocity going sideways (right direction)
             batteryRb.linearVelocity = new Vector2(-20, batteryRb.linearVelocity.y);
             Debug.Log("Added sideways velocity to Battery.");

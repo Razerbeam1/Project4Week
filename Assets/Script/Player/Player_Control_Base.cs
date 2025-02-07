@@ -46,6 +46,7 @@ public class Player_Control_Base : MonoBehaviour
             // ใส่ค่า Torque เพื่อให้ตัวละครกลิ้งไปตามทิศทาง
             float torqueAmount = -moveInput * adjustedSpeed;
             rb.AddTorque(torqueAmount);
+            Debug.Log("torque = " +torqueAmount);
         }
     }
     #endregion
