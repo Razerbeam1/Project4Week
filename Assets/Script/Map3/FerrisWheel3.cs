@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FerrisWheel : MonoBehaviour
+public class FerrisWheel3 : MonoBehaviour
 {
     private Transform player;
     private Rigidbody2D playerRb;

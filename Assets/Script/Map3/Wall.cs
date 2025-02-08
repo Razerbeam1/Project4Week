@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic; // Needed for List
 public class Wall : MonoBehaviour
 {
-    public float massThreshold = 50f; // Minimum mass required to break the wall
+    public float massThreshold = 1f; // Minimum mass required to break the wall
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -43,6 +43,7 @@ public class Wall : MonoBehaviour
             {
                 child.gameObject.AddComponent<BoxCollider2D>();
             }
+            Destroy(child.gameObject,2);
         }
 
         // Destroy the parent object (optional, if you don't want an empty GameObject left)

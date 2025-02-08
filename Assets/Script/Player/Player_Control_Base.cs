@@ -9,6 +9,7 @@ public class Player_Control_Base : MonoBehaviour
     private float weight;
     [SerializeField] private float baseWeight;
     public Transform holdPoint;
+    [SerializeField] private float maxRotationSpeed;
     
     public List<GameObject> pickedUpObjects = new List<GameObject>(); // List to store picked-up objects
     private bool canPickup = true; // Cooldown flag to control picking up objects
@@ -45,9 +46,26 @@ public class Player_Control_Base : MonoBehaviour
         {
             // ใส่ค่า Torque เพื่อให้ตัวละครกลิ้งไปตามทิศทาง
             float torqueAmount = -moveInput * adjustedSpeed;
+            
             rb.AddTorque(torqueAmount);
             Debug.Log("torque = " +torqueAmount);
         }
+    }
+    /*private void HandleMovement()
+    {
+        float moveInput = Input.GetAxisRaw("Horizontal"); // -1 (A), 0 (None), 1 (D)
+
+        if (moveInput != 0)
+        {
+            // Apply torque normally
+            float torqueAmount = -moveInput * speed;
+            rb.AddTorque(torqueAmount);
+        }
+    }*/
+    private void FixedUpdate()
+    {
+        // Limit the object's spin speed
+        rb.angularVelocity = Mathf.Clamp(rb.angularVelocity, -maxRotationSpeed, maxRotationSpeed);
     }
     #endregion
 
