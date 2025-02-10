@@ -15,9 +15,14 @@ public class SpriteChanger : MonoBehaviour
     private Vector2 escapeDirection; // ทิศทางที่จะเคลื่อนออกจาก Trap
 
     private Rigidbody2D rb2d; // Rigidbody2D ของ GameObject เพื่อควบคุมการเคลื่อนที่
+    
+    private Vector3 initialPosition; // ตำแหน่งเริ่มต้นของ Obj
 
     private void Start()
     {
+        // บันทึกตำแหน่งเริ่มต้นเมื่อเริ่มเกม
+        initialPosition = transform.position;
+        
         if (spriteRenderer == null)
         {
             // หากไม่ได้กำหนด SpriteRenderer ใน Inspector ให้ใช้ตัวที่อยู่ใน GameObject นี้
@@ -100,6 +105,13 @@ public class SpriteChanger : MonoBehaviour
 
             Debug.Log("Entered Trap Zone. Moving away...");
         }
+        // ตรวจสอบการชนกับ FallTrigger
+        else if (other.CompareTag("FallTrigger"))
+        {
+            // รีเซ็ตตำแหน่งกลับไปที่จุดเริ่มต้น
+            ResetPosition();
+            Debug.Log("Obj hit FallTrigger. Resetting position.");
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -111,6 +123,19 @@ public class SpriteChanger : MonoBehaviour
             isInTrapZone = false;
             rb2d.velocity = Vector2.zero; // หยุดการเคลื่อนที่
             Debug.Log("Exited Trap Zone. Stopping movement.");
+        }
+    }
+    
+    private void ResetPosition()
+    {
+        // รีเซ็ตตำแหน่งของ Obj กลับไปที่จุดเริ่มต้น
+        transform.position = initialPosition;
+        
+        // หากต้องการให้ Rigidbody2D หยุดการเคลื่อนที่ก่อนการรีเซ็ต
+        if (rb2d != null)
+        {
+            rb2d.velocity = Vector2.zero; // หยุดการเคลื่อนที่
+            rb2d.angularVelocity = 0f; // หยุดการหมุน
         }
     }
 }

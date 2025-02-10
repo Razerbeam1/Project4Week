@@ -12,12 +12,35 @@ public class Player_controller2 : MonoBehaviour
     private bool isOnGround = false; // ตรวจสอบว่าอยู่บนพื้นหรือไม่
     private Vector2 groundNormal; // ทิศทาง Normal ของพื้น
     
+    [Header("Control Settings")]
+    [SerializeField] private Transform absorbPoint; // จุดที่ใช้ดูดวัตถุ
+    [SerializeField] private float absorbRange; // ระยะการดูดวัตถุ
+    [SerializeField] private GameObject[] absorbableObjects; // วัตถุที่สามารถดูดได้
+    [SerializeField] private float sizeIncreaseFactor; // ปริมาณการขยายตัวของ Player ต่อวัตถุหนึ่งชิ้น //0.6
+    [SerializeField] private Image[] absorbCountImages; // Array ของรูปภาพ UI
+    [SerializeField] private int maxAbsorbableObjects; // จำนวนวัตถุสูงสุดที่ดูดได้
+    
+    private bool canAbsorb = true; // ตัวแปรบ่งชี้ว่า Player สามารถดูดวัตถุได้หรือไม่
+    private float absorbCooldown = 3f; // เวลาหยุดการดูด (ในวินาที)
+    private float currentCooldownTime = 0f; // เวลาปัจจุบันที่หยุดการดูด
+    
+    private Rigidbody2D rb;
+    private bool isGrounded = false;
+    private List<GameObject> absorbedObjects = new List<GameObject>(); // เก็บวัตถุที่ถูกดูด
+
+    private float initialScale; // ขนาดเริ่มต้นของ Player
+    
+    [Header("Weight Settings")]
+    [SerializeField] private float weightIncreasePerObject; // น้ำหนักที่เพิ่มต่อวัตถุที่ดูด
+    private float weight; // น้ำหนักของ Player
+    [SerializeField] private float baseWeight; // น้ำหนักเริ่มต้นของ Player
+    
+    private float initialColliderRadius; //รัศมีเริ่มต้นของ Collider
     
     // เพิ่มเพื่อให้ Player ร่วงลง
     private bool isFalling = false;
     
     //[Header("--------------------------")]
-    
     // ประกาศตัวแปร playerMass
     [SerializeField] public float playerMass;
 
@@ -173,7 +196,6 @@ public class Player_controller2 : MonoBehaviour
             );
         }
     }
-
     
     // ปรับการเคลื่อนที่ให้ตรงกับแนวพื้น
     Vector2 AdjustMovementToGround(Vector2 inputDirection)
@@ -244,47 +266,6 @@ public class Player_controller2 : MonoBehaviour
             // ไม่ต้องทำอะไรเป็นพิเศษ
         }
     }
-    
-    //--------------------------------------------------------------------------------------------------------
-    
-    [Header("Control Settings")]
-    [SerializeField] private Transform absorbPoint; // จุดที่ใช้ดูดวัตถุ
-    [SerializeField] private float absorbRange; // ระยะการดูดวัตถุ
-    [SerializeField] private GameObject[] absorbableObjects; // วัตถุที่สามารถดูดได้
-    [SerializeField] private float sizeIncreaseFactor; // ปริมาณการขยายตัวของ Player ต่อวัตถุหนึ่งชิ้น //0.6
-    [SerializeField] private Image[] absorbCountImages; // Array ของรูปภาพ UI
-    [SerializeField] private int maxAbsorbableObjects; // จำนวนวัตถุสูงสุดที่ดูดได้
-    
-    private bool canAbsorb = true; // ตัวแปรบ่งชี้ว่า Player สามารถดูดวัตถุได้หรือไม่
-    private float absorbCooldown = 3f; // เวลาหยุดการดูด (ในวินาที)
-    private float currentCooldownTime = 0f; // เวลาปัจจุบันที่หยุดการดูด
-
-    
-    private Rigidbody2D rb;
-    private bool isGrounded = false;
-    private List<GameObject> absorbedObjects = new List<GameObject>(); // เก็บวัตถุที่ถูกดูด
-
-    private float initialScale; // ขนาดเริ่มต้นของ Player
-    
-    [Header("Weight Settings")]
-    [SerializeField] private float weightIncreasePerObject; // น้ำหนักที่เพิ่มต่อวัตถุที่ดูด
-    private float weight; // น้ำหนักของ Player
-    [SerializeField] private float baseWeight; // น้ำหนักเริ่มต้นของ Player
-
-    
-    [Header("Hp Settings")]
-    [SerializeField] public Image[] hpImages; // อ้างอิงถึงจุดรูปภาพ HP ทั้งหมด
-    [SerializeField] int hp; // จำนวน HP เริ่มต้นของผู้เล่น
-    
-    [Header("Trash Can Settings")]
-    [SerializeField] private TrashCan trashCan; // อ้างอิงถึง TrashCan ที่แยกออกมา
-    
-    [Header("Lose Game Settings")]
-    [SerializeField] private GameObject loseCanvas; // Canvas Lose
-    [SerializeField] private GameObject gamePlayCanvas; // Canvas Game Play
-    
-    
-    private float initialColliderRadius; //รัศมีเริ่มต้นของ Collider
     
     #region <HandleReleaseObjects> //ปล่อยวัตถุที่ผู้เล่นดูดมา
     // ฟังก์ชันการปล่อยวัตถุ
@@ -392,7 +373,7 @@ public class Player_controller2 : MonoBehaviour
          // Debug.Log("ไม่พบวัตถุในระยะดูด");
     }
     #endregion
-
+    
     // ฟังก์ชันสำหรับอัปเดตมวลของ Player
     private void UpdatePlayerMass()
     { 
@@ -486,7 +467,23 @@ public class Player_controller2 : MonoBehaviour
         Gizmos.DrawWireSphere(absorbPoint.position, absorbRange);
     }
     #endregion
+    
+    //--------------------------------------------------------------------------------------------------------
+    
+    [Header("Hp Settings")]
+    [SerializeField] public Image[] hpImages; // อ้างอิงถึงจุดรูปภาพ HP ทั้งหมด
+    [SerializeField] int hp; // จำนวน HP เริ่มต้นของผู้เล่น
+    [SerializeField] private int maxHp = 4; // กำหนดค่า HP สูงสุดของ Player
 
+    
+    [Header("Trash Can Settings")]
+    //[SerializeField] private TrashCan trashCan; // อ้างอิงถึง TrashCan ที่แยกออกมา
+    
+    [Header("Lose Game Settings")]
+    [SerializeField] private GameObject loseCanvas; // Canvas Lose
+    [SerializeField] private GameObject gamePlayCanvas; // Canvas Game Play
+    
+    
     #region <UpdateAbsorbCountUI> //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     private void UpdateAbsorbCountUI() //อัปเดต UI ของจำนวนวัตถุที่ผู้เล่นดูดมา
     {
@@ -507,7 +504,7 @@ public class Player_controller2 : MonoBehaviour
     #region <OnTriggerEnter2D> //ตรวจจับการชนกับ Trigger
     private void OnTriggerEnter2D(Collider2D other) //ตรวจจับการชนกับ Trigger
     {
-        /*// ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
+        // ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
         if (other.CompareTag("FallTrigger")) // FallTrigger คือตำแหน่งที่ใช้ตรวจสอบการตกจากแมป
         {
             // ให้ Player กลับไปที่จุดเช็คพอยต์ล่าสุด
@@ -544,102 +541,31 @@ public class Player_controller2 : MonoBehaviour
                     break;
                 }
             }
-        }*/
-        
-        // ตรวจจับการตกจากแมป (ถ้าผู้เล่นตกไปในหลุม)
-        if (other.CompareTag("FallTrigger")) // FallTrigger คือตำแหน่งที่ใช้ตรวจสอบการตกจากแมป
-        {
-            // ให้ Player กลับไปที่จุดเช็คพอยต์ล่าสุด
-            for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
-            {
-                if (Checkpoint.checkpointReached[i]) 
-                {
-                    transform.position = Checkpoint.checkpointPositions[i]; // กลับไปที่เช็คพอยต์ล่าสุด
-                    Debug.Log("Player fell. Respawning at checkpoint " + (i + 1));
-                    break;
-                }
-            }
-        }
-    
-        if (other.CompareTag("Trap")) // เมื่อชนกับกับดัก
-        {
-            // ลด HP และอัปเดต UI
-            hp--;
-            UpdateHPUI();  // เรียกอัปเดต UI หลังจากที่ HP ลดลง
-
-            // เช็คว่าถ้า HP หมด (Game Over)
-            if (hp <= 0)
-            {
-                Debug.Log("Game Over!");
-            }
-
-            // ถ้า HP หมด ให้กลับไปที่เช็คพอยต์ล่าสุด
-            for (int i = Checkpoint.checkpointReached.Length - 1; i >= 0; i--)
-            {
-                if (Checkpoint.checkpointReached[i]) 
-                {
-                    transform.position = Checkpoint.checkpointPositions[i]; // กลับไปที่เช็คพอยต์ล่าสุด
-                    Debug.Log("Player fell. Respawning at checkpoint " + (i + 1));
-                    break;
-                }
-            }
         }
     }
     #endregion
-    private void Awake()
-    {
-        // ซ่อน UI ของ HP ทุกรูปภาพในตอนเริ่มต้น
-        foreach (Image img in hpImages)
-        {
-            img.enabled = false; // ซ่อนทุกภาพในตอนเริ่มต้น
-        }
-    }
     
     #region <UpdateHPUI> //อัปเดต UI ของ HP ของผู้เล่น
     private void UpdateHPUI() //อัปเดต UI ของ HP ของผู้เล่น
     {
-        /*for (int i = 0; i < hpImages.Length; i++)
+        for (int i = 0; i < hpImages.Length; i++)
         {
             if (i < hp)
-            { 
-                //hpImages[i].color = Color.green; // สีปกติ
+            {
+                hpImages[i].gameObject.SetActive(true); // เปิด GameObject
             }
             else
             {
-                hpImages[i].color = new Color(1, 1, 1, 0.5f); // สีจาง (Alpha 0.5)
+                hpImages[i].gameObject.SetActive(false); // ปิด GameObject
             }
         }
-        
+    
         // ตรวจสอบ HP และเรียก Game Over ถ้า HP หมด
         if (hp <= 0)
         {
             HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม
-        }*/
+        }
         
-        // ตรวจสอบให้ HP ไม่เกินจำนวนภาพที่มี
-        hp = Mathf.Min(hp, hpImages.Length); // ทำให้ HP ไม่เกินจำนวนภาพ
-
-        // ปิดรูปภาพ HP ทั้งหมดก่อน
-        foreach (Image img in hpImages)
-        {
-            img.enabled = false; // ซ่อนทุกภาพ
-        }
-
-        // เปิดรูปภาพตามลำดับของ HP
-        for (int i = 0; i < hp; i++)
-        {
-            if (i < hpImages.Length)
-            {
-                // เปิดรูปภาพตามลำดับ HP
-                hpImages[i].enabled = true; 
-            }
-        }
-
-        // ถ้า HP <= 0 ให้ทำการหยุดเกม
-        if (hp <= 0)
-        {
-            HandleGameOver(); // เรียกฟังก์ชันสำหรับการหยุดเกม
-        }
     }
     #endregion
     
@@ -664,5 +590,65 @@ public class Player_controller2 : MonoBehaviour
         Debug.Log("Game Over! HP หมด.");
     }
     #endregion
+    
+    // ฟังก์ชัน Reset สถานะของ Player
+    public void ResetPlayerStats()
+    {
+        hp = maxHp; // รีเซ็ตค่า HP
+        UpdateHPUI(); // อัปเดต UI HP ใหม่
+
+        // เคลียร์วัตถุที่ดูดซับมา
+        foreach (GameObject obj in absorbedObjects)
+        {
+            if (obj != null)
+            {
+                obj.transform.SetParent(null); // ปลดจาก Parent
+                Destroy(obj); // ทำลายวัตถุ
+            }
+        }
+
+        absorbedObjects.Clear(); // ล้างลิสต์ให้ว่างเปล่า
+
+        UpdatePlayerMass(); // อัปเดตมวลหลังจากรีเซ็ต
+        UpdatePlayerCollider(); // อัปเดต Collider หลังจากรีเซ็ต
+
+        Debug.Log("ResetPlayerStats() -> Clear absorbedObjects, Count: " + absorbedObjects.Count);
+    }
+
+
+
+    public void ResetPlayerMass()
+    {
+        rb.mass = 1f; // รีเซ็ตมวลเป็นค่าตั้งต้น
+    }
+
+    public void ResetPlayerCollider()
+    {
+        CircleCollider2D collider = GetComponent<CircleCollider2D>();
+        if (collider != null)
+        {
+            collider.radius = initialColliderRadius; // รีเซ็ตขนาด Collider
+        }
+    }
+
+    public void ClearAbsorbedObjects()
+    {
+        foreach (GameObject obj in absorbedObjects)
+        {
+            if (obj != null)
+            {
+                obj.transform.SetParent(null);
+                Destroy(obj);
+            }
+        }
+
+        absorbedObjects.Clear(); // ล้างลิสต์ให้ว่างเปล่า
+        UpdatePlayerMass(); // อัปเดตมวลใหม่
+        UpdatePlayerCollider(); // อัปเดต Collider ใหม่
+
+        Debug.Log("ClearAbsorbedObjects() -> Cleared objects, Count: " + absorbedObjects.Count);
+    }
+
+    
 }
 

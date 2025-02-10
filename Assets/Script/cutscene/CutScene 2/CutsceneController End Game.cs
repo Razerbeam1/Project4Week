@@ -8,10 +8,13 @@ public class CutsceneControllerEndGame : MonoBehaviour
     [SerializeField] float fadeDuration; // ระยะเวลาการเฟด
     [SerializeField] float delayBetweenImages; // เวลาหน่วงก่อนแสดงภาพถัดไป
 
-    public GameObject cutscenePanel; // Panel ของ Cutscene
-    public GameObject WinPanel; // Panel ของ Credit ที่จะเปิดหลังจาก Cutscene เสร็จ
-    
-    
+    [SerializeField] private GameObject panelCutsceneENDGame; // Panel ของ Cutscene
+    [SerializeField] private GameObject WinPanel; // Panel ของ Credit ที่จะเปิดหลังจาก Cutscene เสร็จ
+    [SerializeField] private GameObject panelGameSystem; // Panel ของ Game System
+    [SerializeField] private GameObject panel_UIGame_Playe; // Panel ของ UIGame_Playe
+
+    private bool hasWinPanelBeenOpened = false;
+
     private void Start()
     {
         // ตั้งค่าเริ่มต้นให้รูปทั้งหมดโปร่งใส
@@ -25,6 +28,28 @@ public class CutsceneControllerEndGame : MonoBehaviour
         StartCoroutine(PlayCutscene());
     }
 
+    void Update()
+    {
+        if (WinPanel != null)
+        {
+            if (!WinPanel.activeSelf)
+            {
+                Debug.LogError("⚠️ มีบางอย่างไปปิด WinPanel หลังจากเปิด!", WinPanel);
+
+                // ลองเช็คว่าใครเป็นคนปิดมัน
+                GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+                foreach (var obj in allObjects)
+                {
+                    if (obj.activeSelf == false && obj == WinPanel)
+                    {
+                        Debug.LogError($"🔎 {obj.name} ถูกปิดโดยไม่ทราบสาเหตุ!", obj);
+                    }
+                }
+            }
+        }
+    }
+
+
     private IEnumerator PlayCutscene()
     {
         for (int i = 0; i < cutsceneImages.Length; i++)
@@ -33,7 +58,6 @@ public class CutsceneControllerEndGame : MonoBehaviour
             yield return new WaitForSeconds(delayBetweenImages);
         }
         
-        // เมื่อ Cutscene จบ → ปิด Panel Cutscene และเปิด Panel Game System
         EndCutscene2();
     }
 
@@ -56,9 +80,35 @@ public class CutsceneControllerEndGame : MonoBehaviour
     
     private void EndCutscene2()
     {
-        WinPanel.SetActive(true);
-        cutscenePanel.SetActive(false);
-        
+        Debug.Log("EndCutscene2 Called!");
+    
+        if (WinPanel != null)
+        {
+            Debug.Log("WinPanel is not null, activating now...");
+            ShowWinPanel();
+        }
+        else
+        {
+            Debug.LogError("WinPanel is NULL! Please assign it in the Inspector.");
+        }
+    
+        panelCutsceneENDGame?.SetActive(false);
+        panelGameSystem?.SetActive(false);
+        panel_UIGame_Playe?.SetActive(false);
     }
 
+    private void ShowWinPanel()
+    {
+        if (WinPanel != null)
+        {
+            WinPanel.SetActive(true);
+            hasWinPanelBeenOpened = true;
+            Debug.Log("✅ WinPanel Activated: " + WinPanel.activeSelf);
+        }
+        else
+        {
+            Debug.LogError("❌ WinPanel is NULL! ไม่สามารถเปิดได้");
+        }
+    }
 }
+

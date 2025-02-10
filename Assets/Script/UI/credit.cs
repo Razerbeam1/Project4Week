@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class credit : MonoBehaviour
 {
@@ -15,11 +16,6 @@ public class credit : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        
-    }
-
     // ฟังก์ชันที่ใช้เปลี่ยน Sprite ของ Background ทุกๆ 0.25 วินาที
     void ChangeSprite()
     {
@@ -29,13 +25,18 @@ public class credit : MonoBehaviour
         currentIndex = (currentIndex + 1) % backgroundSprites.Length;
     }
     
-    public GameObject Main_menu;
-    public GameObject Credit;
+    [Header("Home page")] 
+    [SerializeField] private GameObject Home_page;
     
-    public void Mainmenu ()
+    [Header("Credit")]
+    [SerializeField] private GameObject credit_Panel;
+    
+    public void OnHome_pageButtonClicked()
     {
-        Credit.SetActive(false);
-        Main_menu.SetActive(true);
+        credit_Panel.SetActive(false);
+        Home_page.SetActive(true);
+        // โหลด Scene ปัจจุบันใหม่เพื่อรีเซ็ตเกม
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     
     

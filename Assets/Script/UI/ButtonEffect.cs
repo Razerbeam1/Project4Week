@@ -16,12 +16,12 @@ public class ButtonEffect : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerEnter(PointerEventData eventData)
     {
         transform.localScale = originalScale * 1.1f; // ขยายปุ่ม
-        button.image.color = Color.yellow; // เปลี่ยนสีปุ่ม
+        //button.image.color = Color.yellow; // เปลี่ยนสีปุ่ม
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         transform.localScale = originalScale; // กลับเป็นขนาดเดิม
-        button.image.color = Color.white; // กลับเป็นสีเดิม
+        //button.image.color = Color.white; // กลับเป็นสีเดิม
     }
 }

@@ -10,15 +10,18 @@ TagManager:
   - Trap
   - trashCan
   - TrashObject
+  - Wall
+  - gear
+  - iron
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Ground
   - Water
   - UI
   - Metal
-  - 
+  - Player
   - 
   - 
   - 

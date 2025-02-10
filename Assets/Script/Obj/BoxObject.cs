@@ -14,7 +14,7 @@ public class BoxObject : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             // หยุดการเคลื่อนที่ของ Player
-            PlayerController playerController = other.GetComponent<PlayerController>();
+            Player_controller2 playerController = other.GetComponent<Player_controller2>();
             if (playerController != null)
             {
                 playerController.enabled = false; // ปิดการควบคุมของ Player

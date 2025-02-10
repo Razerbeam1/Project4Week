@@ -1,13 +1,11 @@
-
 using UnityEngine;
-
 public class Checkpoint : MonoBehaviour
 {
     // กำหนดตัวแปรสำหรับบันทึกตำแหน่งของเช็คพอยต์
     public static Vector3[] checkpointPositions = new Vector3[3]; // มี 3 เช็คพอยต์
     public static bool[] checkpointReached = new bool[3]; // สถานะว่าแต่ละเช็คพอยต์ถูกผ่านหรือยัง
 
-    public int checkpointIndex = 0; // ตัวบ่งชี้ว่าเช็คพอยต์ไหนถูกผ่าน
+    public int checkpointIndex; // ตัวบ่งชี้ว่าเช็คพอยต์ไหนถูกผ่าน
 
     private void Start()
     {
