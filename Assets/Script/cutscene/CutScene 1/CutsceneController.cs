@@ -30,6 +30,9 @@ public class CutsceneController : MonoBehaviour
 
     private IEnumerator PlayCutscene()
     {
+        // เริ่มเล่นเสียง Cutscene เมื่อเริ่มเล่น Cutscene
+        AudioManager.Instance.PlayCutsceneSound(); 
+        
         for (int i = 0; i < cutsceneImages.Length; i++)
         {
             yield return StartCoroutine(FadeIn(cutsceneImages[i]));
@@ -62,6 +65,12 @@ public class CutsceneController : MonoBehaviour
         panelCutsceneStarGame.SetActive(false); // ปิด Cutscene
         panelGameSystem.SetActive(true); // เปิด Game System
         panel_UIGame_Playe.SetActive(true); // เปิด UIGame_Playe
+        
+        // หยุดเสียงเมื่อจบ Cutscene
+        AudioManager.Instance.mainAudioSource.Stop(); // หยุดเสียง
+        
+        // เรียกใช้งานเสียงพื้นหลังของเกม
+        AudioManager.Instance.PlayBackgroundMusic(); // เล่นเสียงพื้นหลังเกม
     }
 }
 

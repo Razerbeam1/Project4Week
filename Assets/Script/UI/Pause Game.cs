@@ -8,12 +8,15 @@ public class PauseGame : MonoBehaviour
     public Sprite[] backgroundSprites; // ใส่รูปภาพใน Inspector
     public GameObject pausePanel; // Panel ที่ใช้แสดงเมื่อเกมหยุด
     private int currentIndex = 0;
-
-    public GameObject mainmenu;
+    
+    public GameObject howToPlayPanel; // ✅ เพิ่ม GameObject สำหรับหน้า HowToPlay
+    
 
     void Start()
     {
         pausePanel.SetActive(false); // เริ่มต้นด้วยการซ่อน Panel Pause
+        howToPlayPanel.SetActive(false); // ✅ ซ่อนหน้า HowToPlay ตอนเริ่มเกม
+
         if (backgroundSprites.Length > 0)
         {
             InvokeRepeating("ChangeSprite", 0f, 0.25f); // เปลี่ยนภาพทุก 0.25 วินาที (4 FPS)
@@ -28,35 +31,31 @@ public class PauseGame : MonoBehaviour
             TogglePause();
         }
     }
-
-    // ฟังก์ชันสำหรับสลับสถานะการหยุดเกม
+    
     private void TogglePause()
     {
-        if (pausePanel.activeSelf) // ถ้า Panel Pause เปิดอยู่
+        if (pausePanel.activeSelf)
         {
             ResumeGame();
         }
-        else // ถ้า Panel Pause ปิดอยู่
+        else
         {
             PauseGameSystem();
         }
     }
 
-    // ฟังก์ชันที่หยุดเกม
     private void PauseGameSystem()
     {
-        Time.timeScale = 0f; // หยุดเกม
-        pausePanel.SetActive(true); // เปิดแสดง Panel Pause
+        Time.timeScale = 0f;
+        pausePanel.SetActive(true);
     }
 
-    // ฟังก์ชันที่เริ่มเกม
     private void ResumeGame()
     {
-        Time.timeScale = 1f; // เริ่มเกมใหม่
-        pausePanel.SetActive(false); // ซ่อน Panel Pause
+        Time.timeScale = 1f;
+        pausePanel.SetActive(false);
     }
 
-    // ฟังก์ชันที่ใช้เปลี่ยน Sprite ของ Background ทุกๆ 0.25 วินาที
     void ChangeSprite()
     {
         if (backgroundSprites.Length == 0) return;
@@ -65,20 +64,16 @@ public class PauseGame : MonoBehaviour
         currentIndex = (currentIndex + 1) % backgroundSprites.Length;
     }
     
-    
     public void RestartGame()
     {
-        // รีเซ็ต Time.timeScale เป็นค่าเริ่มต้น (1)
         Time.timeScale = 1f;
-
-        // โหลดฉากปัจจุบันใหม่
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-
-    public void Mainmenu()
+    
+    public void OpenHowToPlay() // ✅ เปิดหน้า HowToPlay
     {
-        pausePanel.SetActive(false);
-        mainmenu.SetActive(true);
-        
+        pausePanel.SetActive(false); // ซ่อนหน้า Pause
+        howToPlayPanel.SetActive(true); // เปิดหน้า HowToPlay
     }
+    
 }

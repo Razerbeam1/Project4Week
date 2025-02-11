@@ -64,8 +64,8 @@ public class Player_controller2 : MonoBehaviour
 
     }
 
-    public GameObject pausePanel; // Panel ที่ใช้แสดงเมื่อเกมหยุด
-    private int currentIndex = 0;
+    //public GameObject pausePanel; // Panel ที่ใช้แสดงเมื่อเกมหยุด
+    //private int currentIndex = 0;
     
     void Update()
     {
@@ -92,38 +92,10 @@ public class Player_controller2 : MonoBehaviour
             
         }
         
-        if (Input.GetKeyDown(KeyCode.Escape)) // กด ESC เพื่อหยุดเกม
-        {
-            Debug.Log("ESC Key Pressed");  // ทดสอบดูว่าปุ่ม ESC ถูกกดจริงหรือไม่
-            TogglePause();
-        }
     }
-    // ฟังก์ชันสำหรับสลับสถานะการหยุดเกม
-    private void TogglePause()
-    {
-        if (pausePanel.activeSelf) // ถ้า Panel Pause เปิดอยู่
-        {
-            ResumeGame();
-        }
-        else // ถ้า Panel Pause ปิดอยู่
-        {
-            PauseGameSystem();
-        }
-    }
+    
 
-    // ฟังก์ชันที่หยุดเกม
-    private void PauseGameSystem()
-    {
-        Time.timeScale = 0f; // หยุดเกม
-        pausePanel.SetActive(true); // เปิดแสดง Panel Pause
-    }
-
-    // ฟังก์ชันที่เริ่มเกม
-    private void ResumeGame()
-    {
-        Time.timeScale = 1f; // เริ่มเกมใหม่
-        pausePanel.SetActive(false); // ซ่อน Panel Pause
-    }
+   
     private void StopAbsorbingAndFall()
     { 
         canAbsorb = false;
@@ -143,6 +115,9 @@ public class Player_controller2 : MonoBehaviour
         }
 
         absorbedObjects.Clear(); // ล้างวัตถุที่ดูดติด
+        
+        // ✅ เพิ่มแรงกระทำให้ Player ร่วงลง
+        rb2d.velocity = new Vector2(rb2d.velocity.x, -1f); 
 
         UpdateAbsorbCountUI(); // อัปเดต UI
         UpdatePlayerCollider(); // 📌 อัปเดตขนาด Collider ใหม่ หลังจากปล่อย Obj
@@ -194,6 +169,12 @@ public class Player_controller2 : MonoBehaviour
                 transform.localScale.y,
                 transform.localScale.z
             );
+        }
+        
+        // ตรวจสอบว่ามีวัตถุติด Player และเล่นเสียงเดิน
+        if (absorbedObjects.Count > 0) // ตรวจสอบว่ามีวัตถุติดกับ Player หรือไม่
+        {
+            AudioManager.Instance.PlayWalkWithObjectSound(); // เรียกใช้เสียงเดินที่มีวัตถุติดกับ Player
         }
     }
     
@@ -286,10 +267,10 @@ public class Player_controller2 : MonoBehaviour
                 objRb.simulated = true; // เปิดการคำนวณฟิสิกส์
                 Vector2 throwDirection = (obj.transform.position - transform.position).normalized; // ทิศทางการปล่อย
                 objRb.velocity = throwDirection * 5f; // ปรับ 5f เพื่อควบคุมความเร็ว
+
+                // ลดน้ำหนักที่เพิ่มขึ้นจากการดูดวัตถุ
+                weight -= objRb.mass; 
             }
-            
-            // ลดน้ำหนักที่เพิ่มขึ้นจากการดูดวัตถุ
-            weight -= obj.GetComponent<Rigidbody2D>().mass; // ลดน้ำหนักจาก Mass ของวัตถุที่ปล่อยออกไป
 
             // อัปเดตขนาดของ CircleCollider2D
             UpdatePlayerCollider();
@@ -300,12 +281,30 @@ public class Player_controller2 : MonoBehaviour
             // ปิดการดูดชั่วคราว (Cooldown)
             canAbsorb = false;
             currentCooldownTime = absorbCooldown; // ตั้งค่าคูลดาวน์เป็นเวลา absorbCooldown (ค่าเริ่มต้นคือ 10 วินาที)
+        
+            // เปิดการชนของ Collider อีกครั้ง
+            Collider2D objCollider = obj.GetComponent<Collider2D>();
+            Collider2D playerCollider = GetComponent<Collider2D>();
+
+            if (objCollider != null)
+            {
+                objCollider.enabled = true; // เปิดใช้งาน Collider ของ Obj
+                Debug.Log($"เปิด Collider ของ {obj.name} แล้ว"); // Debug Log
+            }
+
+            if (objCollider != null && playerCollider != null)
+            {
+                Physics2D.IgnoreCollision(objCollider, playerCollider, false); // เปิดให้ชนกันได้อีกครั้ง
+                Debug.Log($"เปิดการชนระหว่าง {obj.name} และ Player");
+            }
 
             Debug.Log("โยนวัตถุออก: " + obj.name);
         }
     }
 
     #endregion
+    
+    
     
     #region <AbsorbObjects> //ดูดวัตถุที่อยู่ในระยะที่กำหนด
     private void AbsorbObjects()
@@ -317,6 +316,9 @@ public class Player_controller2 : MonoBehaviour
 
         foreach (Collider2D hit in hits)
         {
+            // เพิ่มการตรวจสอบว่าไม่ใช่วัตถุที่เป็นพื้น
+            //if (hit.CompareTag("Ground")) continue; // ถ้าเป็นพื้น ให้ข้ามการดูด
+        
             if (IsAbsorbable(hit.gameObject))
             {
                 GameObject obj = hit.gameObject;
@@ -380,7 +382,7 @@ public class Player_controller2 : MonoBehaviour
         if (rb == null) return;
 
         float baseMass = 1f; // มวลเริ่มต้นของ Player
-        float massPerObject = 1; // มวลที่เพิ่มขึ้นต่อวัตถุ 1 ชิ้น
+        float massPerObject = 1f; // มวลที่เพิ่มขึ้นต่อวัตถุ 1 ชิ้น
 
         // คำนวณมวลใหม่
         rb.mass = baseMass + (absorbedObjects.Count * massPerObject);
@@ -545,6 +547,11 @@ public class Player_controller2 : MonoBehaviour
     }
     #endregion
     
+    public int GetHealth()
+    {
+        return hp; // ส่งค่าปัจจุบันของ HP
+    }
+    
     #region <UpdateHPUI> //อัปเดต UI ของ HP ของผู้เล่น
     private void UpdateHPUI() //อัปเดต UI ของ HP ของผู้เล่น
     {
@@ -587,6 +594,9 @@ public class Player_controller2 : MonoBehaviour
             gamePlayCanvas.SetActive(false);
         }
 
+        // เรียกใช้เสียง Game Over
+        AudioManager.Instance.PlayGameOverSound();
+        
         Debug.Log("Game Over! HP หมด.");
     }
     #endregion

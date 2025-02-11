@@ -15,6 +15,9 @@ public class LiftManager : MonoBehaviour
     [Header("Lift Movement Settings")]
     [SerializeField] private GameObject lift; // ลิฟต์ที่เราจะเลื่อน
     [SerializeField] private float liftMoveSpeed = 2f; // ความเร็วในการเลื่อนลิฟต์
+    
+    [SerializeField] private SignController signController; // อ้างอิงถึง SignController
+
 
     private void Start()
     {
@@ -98,5 +101,16 @@ public class LiftManager : MonoBehaviour
 
         // เมื่อเลื่อนลงถึงที่แล้ว ให้ลิฟต์หยุดที่ตำแหน่งใหม่
         lift.transform.position = targetPosition;
+        
+        // ปิดสคริปต์ SignController
+        if (signController != null)
+        {
+            Debug.Log("SignController is being disabled");
+            signController.enabled = false; // ปิดการทำงานของ SignController
+        }
+        else
+        {
+            Debug.Log("SignController is not assigned");
+        }
     }
 }

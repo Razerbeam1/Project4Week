@@ -52,6 +52,9 @@ public class CutsceneControllerEndGame : MonoBehaviour
 
     private IEnumerator PlayCutscene()
     {
+        // เริ่มเล่นเสียง Cutscene เมื่อเริ่มเล่น Cutscene
+        AudioManager.Instance.PlayCutsceneSound(); 
+        
         for (int i = 0; i < cutsceneImages.Length; i++)
         {
             yield return StartCoroutine(FadeIn(cutsceneImages[i]));
@@ -95,6 +98,15 @@ public class CutsceneControllerEndGame : MonoBehaviour
         panelCutsceneENDGame?.SetActive(false);
         panelGameSystem?.SetActive(false);
         panel_UIGame_Playe?.SetActive(false);
+        
+        // หยุดเสียงเมื่อจบ Cutscene
+        AudioManager.Instance.mainAudioSource.Stop(); // หยุดเสียง
+        
+        // เล่นเสียง Win หรือเสียงที่ต้องการในกรณีนี้
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayWinSound(); // เรียกใช้เสียงชนะ
+        }
     }
 
     private void ShowWinPanel()

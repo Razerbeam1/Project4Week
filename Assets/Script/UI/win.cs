@@ -12,6 +12,7 @@ public class win : MonoBehaviour
     {
         WIN.SetActive(false);
         Main_menu.SetActive(true);
+        
         // โหลด Scene ปัจจุบันใหม่เพื่อรีเซ็ตเกม
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
@@ -20,6 +21,7 @@ public class win : MonoBehaviour
     {
         WIN.SetActive(false);
         credit.SetActive(true);
+        
     }
 
 }

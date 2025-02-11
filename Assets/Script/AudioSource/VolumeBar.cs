@@ -11,6 +11,8 @@ public class VolumeBar : MonoBehaviour, IPointerDownHandler, IScrollHandler
     [SerializeField] private GameObject volumeBar; // ตัวแทนของ Volume Bar
     [SerializeField] private GameObject volumeIcon; // ไอคอนที่ใช้เปิด/ปิด Volume Bar
 
+    [SerializeField] private AudioManager audioManager; // เชื่อม AudioManager
+    
     private float minY, maxY;
     private bool isBarActive = false; // ตัวแปรบอกว่า Bar เปิดอยู่หรือไม่
 
@@ -68,6 +70,9 @@ public class VolumeBar : MonoBehaviour, IPointerDownHandler, IScrollHandler
         if (handle)
             handle.anchoredPosition = new Vector2(handle.anchoredPosition.x, Mathf.Lerp(minY, maxY, value)); // ปรับตำแหน่ง Handle
 
+        
+        // ตั้งค่าระดับเสียงใน AudioManager
+        audioManager.SetVolume(value);
         PlayerPrefs.SetFloat("Volume", value); // บันทึกระดับเสียงไว้
     }
 }

@@ -31,6 +31,9 @@ public class Checkpoint : MonoBehaviour
             // เพิ่มหมายเลขเช็คพอยต์ถัดไป
             checkpointIndex = Mathf.Min(checkpointIndex + 1, checkpointPositions.Length - 1);
 
+            // เรียกใช้เสียงเมื่อผู้เล่นไปถึงเช็คพอยต์
+            AudioManager.Instance.PlayCheckPointSound();
+            
             Debug.Log("Checkpoint " + (checkpointIndex + 1) + " Reached!");
         }
     }

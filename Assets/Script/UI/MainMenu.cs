@@ -11,10 +11,22 @@ public class MainMenu : MonoBehaviour
     
     [Header("Credit")] 
     [SerializeField] private GameObject how_to_play_Panel;
+    
+    
+    private void Start()
+    {
+        // เล่นเสียงหน้า Home Page เมื่อเข้าเมนู
+        AudioManager.Instance.PlayHomePageSound();
+    }
 
     // ฟังก์ชันที่เรียกเมื่อกดปุ่ม Play
     public void OnPlayButtonClicked()
     {
+        AudioManager.Instance.PlayButtonClickSound(); // เล่นเสียงกดปุ่ม
+        
+        // หยุดเสียงหน้า Home Page
+        AudioManager.Instance.mainAudioSource.Stop(); // หยุดเสียงของหน้า Home Page
+        
         if (homePageCanvas != null)
         {
             homePageCanvas.SetActive(false); // ซ่อน Canvas Home Page
@@ -30,6 +42,8 @@ public class MainMenu : MonoBehaviour
 
     public void OnCreditButtonClicked()
     {
+        AudioManager.Instance.PlayButtonClickSound();
+        
         if (homePageCanvas != null)
         {
             homePageCanvas.SetActive(false);
@@ -43,11 +57,8 @@ public class MainMenu : MonoBehaviour
 
     public void OnHow_to_playitButtonClicked()
     {
-        if (homePageCanvas != null)
-        {
-            homePageCanvas.SetActive(false);
-        }
-
+        AudioManager.Instance.PlayHowToPlaySound();
+        
         if (how_to_play_Panel != null)
         {
             how_to_play_Panel.SetActive(true);
@@ -57,6 +68,7 @@ public class MainMenu : MonoBehaviour
     // ฟังก์ชันที่เรียกเมื่อกดปุ่ม Exit
     public void OnExitButtonClicked()
     {
+        AudioManager.Instance.PlayButtonClickSound();
         Debug.Log("Exit button clicked! Exiting the game...");
         Application.Quit(); // ออกจากเกม (ใช้งานได้เฉพาะ Build จริง)
     }

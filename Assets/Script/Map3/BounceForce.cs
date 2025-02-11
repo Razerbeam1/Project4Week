@@ -3,8 +3,8 @@ using UnityEngine;
 public class BounceForce : MonoBehaviour
 {
     private int jumpCount = 0; // ตัวนับการกระโดด
-    public Transform checkpoint; // เช็คพอย์ที่ต้องการย้ายไป
-    public float jumpThreshold = 4; // จำนวนครั้งที่กระโดดก่อนย้าย
+    [SerializeField] public Transform checkpoint; // เช็คพอย์ที่ต้องการย้ายไป
+    [SerializeField] public float jumpThreshold ; // จำนวนครั้งที่กระโดดก่อนย้าย
     private bool canMoveToCheckpoint = false; // ตรวจสอบว่าเราสามารถย้ายไปยังเช็คพอย์ได้หรือไม่
     private Transform player; // ตัวแปรสำหรับเก็บอ้างอิงถึง Player
 
